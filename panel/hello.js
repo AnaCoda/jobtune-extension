@@ -7,6 +7,7 @@ const buttonPrompt = document.body.querySelector('#button-prompt');
 const elementLoading = document.body.querySelector('#loading');
 const elementError = document.body.querySelector('#error');
 const elementResponse = document.body.querySelector('#response');
+const elementResumeLatex = document.body.querySelector('#resume-latex');
 const fileInput = document.body.querySelector('#file-input');
 const clearFileBtn = document.body.querySelector('#clear-file');
 
@@ -57,12 +58,10 @@ buttonPrompt.addEventListener('click', async () => {
 const STORAGE_KEY = 'persistedResume';
 
 function renderFile(name, text) {
-    hide(elementLoading);
-    hide(elementError);
-    show(elementResponse);
+    show(elementResumeLatex);
     const header = name ? `<h3>${DOMPurify ? DOMPurify.sanitize(name) : name}</h3>` : '';
     const body = (marked && DOMPurify) ? DOMPurify.sanitize(marked.parse(text || '')) : (text || '');
-    elementResponse.innerHTML = header + '<pre>' + body + '</pre>';
+    elementResumeLatex.innerHTML = header + '<pre>' + body + '</pre>';
 }
 
 async function saveFile(name, text) {
@@ -108,8 +107,8 @@ clearFileBtn?.addEventListener('click', async () => {
     } catch (e) {
         localStorage.removeItem(STORAGE_KEY);
     }
-    elementResponse.innerHTML = '';
-    hide(elementResponse);
+    elementResumeLatex.innerHTML = '';
+    hide(elementResumeLatex);
 });
 
 loadStoredFile();
