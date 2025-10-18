@@ -19,7 +19,7 @@ export default [
       copy({
         targets: [
           {
-            src: ['manifest.json', 'background.js', 'panel', 'images'],
+            src: ['manifest.json', 'panel', 'images'],
             dest: 'dist'
           }
         ]

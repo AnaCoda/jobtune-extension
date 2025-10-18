@@ -27,7 +27,7 @@ async function runPrompt(prompt, params) {
 
 buttonPrompt.addEventListener('click', async () => {
     const prompt = "Say hello in a funny way"
-    const availability = await LanguageModel.availability();
+    const availability = await LanguageModel.availability({ expectedOutputs: [{ type: "text", languages: ["en"] }] });
     console.log('Model availability:', availability);
     showLoading();
     try {
