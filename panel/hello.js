@@ -7,6 +7,8 @@ const buttonPrompt = document.body.querySelector('#button-prompt');
 const elementLoading = document.body.querySelector('#loading');
 const elementError = document.body.querySelector('#error');
 const elementResponse = document.body.querySelector('#response');
+const fileInput = document.body.querySelector('#file-input');
+const clearFileBtn = document.body.querySelector('#clear-file');
 
 let session;
 
@@ -51,6 +53,66 @@ buttonPrompt.addEventListener('click', async () => {
         showError(e);
     }
 });
+
+const STORAGE_KEY = 'persistedResume';
+
+function renderFile(name, text) {
+    hide(elementLoading);
+    hide(elementError);
+    show(elementResponse);
+    const header = name ? `<h3>${DOMPurify ? DOMPurify.sanitize(name) : name}</h3>` : '';
+    const body = (marked && DOMPurify) ? DOMPurify.sanitize(marked.parse(text || '')) : (text || '');
+    elementResponse.innerHTML = header + '<pre>' + body + '</pre>';
+}
+
+async function saveFile(name, text) {
+    try {
+        await chrome.storage.local.set({ [STORAGE_KEY]: { name, text } });
+    } catch (e) {
+        console.warn('chrome.storage.local unavailable, falling back to localStorage', e);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, text }));
+    }
+}
+
+async function loadStoredFile() {
+    try {
+        const r = await chrome.storage.local.get(STORAGE_KEY);
+        const entry = r && r[STORAGE_KEY];
+        if (entry && entry.text) {
+            renderFile(entry.name, entry.text);
+        }
+    } catch (e) {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            try {
+                const entry = JSON.parse(raw);
+                renderFile(entry.name, entry.text);
+            } catch (_e) {
+                console.error('Failed to parse stored file', _e);
+            }
+        }
+    }
+}
+
+fileInput?.addEventListener('change', async (ev) => {
+    const f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    const text = await f.text();
+    renderFile(f.name, text);
+    await saveFile(f.name, text);
+});
+
+clearFileBtn?.addEventListener('click', async () => {
+    try {
+        await chrome.storage.local.remove(STORAGE_KEY);
+    } catch (e) {
+        localStorage.removeItem(STORAGE_KEY);
+    }
+    elementResponse.innerHTML = '';
+    hide(elementResponse);
+});
+
+loadStoredFile();
 
 function showLoading() {
     hide(elementResponse);

@@ -2,7 +2,15 @@
 
 <body>
     <h1>Hello, Extensions!</h1>
+
+    <div>
+        <label for="file-input">Load file:</label>
+        <input id="file-input" type="file" accept=".txt,.md,.json,.tex" />
+        <button id="clear-file">Clear</button>
+    </div>
+
     <button id="button-prompt" class="primary">Run AI</button>
+
     <script src="hello.js" type="module"></script>
     <div id="response" class="text" hidden></div>
     <div id="loading" class="text" hidden><span class="blink">...</span></div>
