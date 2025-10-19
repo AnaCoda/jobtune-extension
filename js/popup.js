@@ -3,8 +3,6 @@ const elementLoading = document.body.querySelector('#loading');
 const elementError = document.body.querySelector('#error');
 const elementResponse = document.body.querySelector('#response');
 const elementResumeLatex = document.body.querySelector('#resume-latex');
-const fileInput = document.body.querySelector('#file-input');
-const clearFileBtn = document.body.querySelector('#clear-file');
 
 class ResumesExplorer {
     constructor() {
