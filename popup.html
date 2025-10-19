@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Selection</title>
+    <link rel="stylesheet" href="css/popup.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Resume Selection</h1>
+        <button id="refreshBtn" class="refresh-btn">Refresh</button>
+    </div>
+
+    <div class="master-resume-container">
+        <label for="masterResumeInput">Master Resume:</label>
+        <input type="file" id="masterResumeInput" accept=".txt,.md,.tex">
+        <button id="saveMasterResumeBtn">Save</button>
+        <div id="masterResumeDetails" class="master-resume-details"></div>
+    </div>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search resumes..." class="search-input">
+    </div>
+    
+    <div class="stats">
+        <span id="resumeCount">0 resumes</span>
+    </div>
+    <div id="resumesContainer" class="resumes-container">
+        <div class="loading">Loading resumes...</div>
+    </div>
+    
+    <div class="footer">
+        <button id="clearAllBtn" class="clear-btn">Clear All</button>
+        <button id="exportBtn" class="export-btn">Export</button>
+    </div>
+    
+    <script src="js/popup.js"></script>
+</body>
+</html>
