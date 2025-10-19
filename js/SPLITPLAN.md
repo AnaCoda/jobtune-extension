@@ -141,6 +141,6 @@ e.x.
     - `alwaysInclude (boolean)`
 4. We then create a function `splitResume(resumeText: string): ResumeItem[]` that takes in the full resume text and returns a list of ResumeItems.
 5. What is the best way to enable/disable certain ResumeItems by inputting the list into an algorithm that rates the relevance of each item to a job description?
-    - We can create a function `rateResumeItems(resumeItems: ResumeItem[], jobDescription: string): number[]` that returns a list of scores corresponding to each ResumeItem (`alwaysInclude` items get a max score).
+    - We can create a function `rateResumeItems(resumeItems: ResumeItem[], jobDescription: string): { item: ResumeItem, score: number }[]` that returns a list of objects binding each ResumeItem to its score (`alwaysInclude` items get a max score).
 6. Once we have the scores, we make the best 1-page resume possible by removing low-scoring items until we are under the page limit (we may need to render the LaTeX to PDF and check the page count iteratively).
-    - We can create a function `generateBestResume(resumeItems: ResumeItem[], scores: number[], pageLimit: number): string` that returns the final LaTeX resume text.
+    - We can create a function `generateBestResume(scoredItems: { item: ResumeItem, score: number }[], pageLimit: number): string` that returns the final LaTeX resume text.
