@@ -137,44 +137,43 @@ function splitResume(resumeText) {
 /// This function rates each ResumeItem against a job description.
 /// Items marked as alwaysInclude get the maximum score.
 /// 
-/// Returns: Array of scores (numbers between 0 and 1) corresponding to each ResumeItem
+/// Returns: Array of objects with { item: ResumeItem, score: number }
 async function rateResumeItems(resumeItems, jobDescription) {
-    const scores = [];
+    const scoredItems = [];
     
     for (const item of resumeItems) {
         // Always include items get max score
         if (item.alwaysInclude) {
-            scores.push(1.0);
+            scoredItems.push({ item, score: 1.0 });
             continue;
         }
         
         // Skip rating OTHER items (they should all be alwaysInclude anyway)
         if (item.type === ResumeItemType.OTHER) {
-            scores.push(1.0);
+            scoredItems.push({ item, score: 1.0 });
             continue;
         }
         
         // Rate the item against the job description (TODO)
-        scores.push(0.5);
+        scoredItems.push({ item, score: 0.5 });
     }
-    return scores;
+    return scoredItems;
 }
 
 /// This function creates the best possible resume by selecting items based on scores
 /// and ensuring the result fits within the page limit.
 /// 
 /// Returns: String containing the final LaTeX resume text
-function generateBestResume(resumeItems, scores, pageLimit = 1) {
-    // Create array of items with their scores and indices
-    const scoredItems = resumeItems.map((item, index) => ({
-        item,
-        score: scores[index],
+function generateBestResume(scoredItems, pageLimit = 1) {
+    // Add indices to track original order
+    const itemsWithIndices = scoredItems.map((scoredItem, index) => ({
+        ...scoredItem,
         index
     }));
     
     // Separate always include items from optional items
-    const alwaysInclude = scoredItems.filter(si => si.item.alwaysInclude || si.item.type === ResumeItemType.OTHER);
-    const optional = scoredItems.filter(si => !si.item.alwaysInclude && si.item.type !== ResumeItemType.OTHER);
+    const alwaysInclude = itemsWithIndices.filter(si => si.item.alwaysInclude || si.item.type === ResumeItemType.OTHER);
+    const optional = itemsWithIndices.filter(si => !si.item.alwaysInclude && si.item.type !== ResumeItemType.OTHER);
     
     // Sort optional items by score (descending)
     optional.sort((a, b) => b.score - a.score);

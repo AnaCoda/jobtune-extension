@@ -23,7 +23,7 @@ items.forEach((item, index) => {
     console.log(`  Type: ${item.type}`);
     console.log(`  Always Include: ${item.alwaysInclude}`);
     console.log(`  Content Length: ${item.content.length} characters`);
-    console.log(`  Content Preview (first 600 chars):`);
+    console.log(`  Content Preview:`);
     console.log(`  ${item.humanReadableContent.substring(0, 1000).replace(/\n/g, '\\n')}`);
 });
 
