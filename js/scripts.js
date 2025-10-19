@@ -15,3 +15,19 @@ function shardResume(resumeText) {
 async function createResume(languageModel, document, masterResume) {
 
 }
+
+/// This function runs a prompt against the language model,
+/// handling errors appropriately.
+///
+/// Returns: The response from the language model.
+async function runPrompt(prompt) {
+    try {
+        const session = await LanguageModel.create(LANGUAGE_MODEL_OPTIONS);
+        return session.prompt(prompt);
+    } catch (e) {
+        console.log('Prompt failed');
+        console.error(e);
+        console.log('Prompt:', prompt);
+        throw e;
+    }
+}

@@ -11,23 +11,6 @@ const LANGUAGE_MODEL_OPTIONS = {
         });
     },
 };
-/// How frequently to update resumes.
-/// If the same page is visted multiple times within this interval,
-/// the resume will not be updated again.
-const UPDATE_INTERVAL = 1000 * 60 * 60 * 24; // 24 hours
-
-async function runPrompt(prompt) {
-    try {
-        const session = await LanguageModel.create(LANGUAGE_MODEL_OPTIONS);
-        return session.prompt(prompt);
-    } catch (e) {
-        console.log('Prompt failed');
-        console.error(e);
-        console.log('Prompt:', prompt);
-        // reset(); // Removed undefined function call
-        throw e;
-    }
-}
 
 async function createLanguageModel() {
   console.log('Creating language model...');

@@ -215,17 +215,6 @@ class ResumesExplorer {
         return date.toLocaleDateString();
     }
 
-    async saveResumeToClipboard(url) {
-        const resume = this.resumes[url];
-        if (!resume) return;
-
-        try {
-            await navigator.clipboard.writeText(resume);
-        } catch (error) {
-            console.error('Failed to copy resume to clipboard:', error);
-        }
-    }
-
     filterResumes(searchTerm) {
         const lowerCaseSearchTerm = searchTerm.toLowerCase();
         if (!lowerCaseSearchTerm) {
