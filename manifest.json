@@ -1,12 +1,13 @@
 {
-    "name": "Hello Extensions of the world!",
-    "description": "Base Level Extension",
-    "version": "1.0",
-    "manifest_version": 3,
-    "permissions": ["storage"],
-    "action": {
-        "default_title": "Hello Panel AI",
-        "default_icon": "images/hello_extensions.png",
-        "default_popup": "panel/hello.html"
-    }
+  "name": "Hello Extensions",
+  "description": "Base Level Extension",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["<all_urls>"], 
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "View Page Summaries",
+    "default_icon": "assets/icon.png"
+  }
 }

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Resume Generator</title>
+        <link rel="stylesheet" href="css/popup.css">
+    </head>
+    <body>
+        <h1>Resume Thingy</h1>
+
+        <button id="button-prompt" class="primary">Generate for Page</button>
+
+        <div id="resume-latex" class="text" hidden></div>
+        <div id="response" class="text" hidden></div>
+        <div id="loading" class="text" hidden><span class="blink">...</span></div>
+        <div id="error" class="text" hidden></div>
+
+        <hr>
+
+        <div id="resumes-explorer">
+            <h2>Resumes Explorer</h2>
+            
+            <div id="master-resume-section">
+                <h3>Master Resume</h3>
+                <div id="master-resume-details"></div>
+                <input type="file" id="masterResumeInput" accept=".txt,.md,.tex">
+                <button id="saveMasterResumeBtn">Save Master Resume</button>
+            </div>
+        
+            <hr>
+        
+            <div id="resumes-list-section">
+                <h3>Generated Resumes</h3>
+                <div class="controls">
+                    <button id="refreshBtn">Refresh</button>
+                    <button id="exportBtn">Export All</button>
+                    <button id="clearAllBtn" class="danger">Clear All</button>
+                </div>
+                <div id="resumes-container"></div>
+            </div>
+        </div>
+
+        <!-- Script files. Order matters -->
+        <script src="js/popup.js"></script>
+        <script src="js/scripts.js"></script>
+        <script src="js/create.js"></script>
+    </body>
+</html>
