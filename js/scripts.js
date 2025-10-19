@@ -234,7 +234,6 @@ if (typeof module !== 'undefined' && module.exports) {
         ResumeItem,
         splitResume,
         rateResumeItems,
-        generateBestResume,
-        estimateMaxContentLength
+        generateBestResume
     };
 }
