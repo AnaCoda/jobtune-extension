@@ -1,4 +1,3 @@
-
 LANGUAGE_MODEL_OPTIONS = {
     initialPrompts: [
         { role: 'system', content: 'You are a concise assistant who is an expert in resumes.' }
@@ -43,18 +42,6 @@ async function createLanguageModel() {
   return languageModel;
 }
 
-const shouldUpdate = async () => {
-  const last_update_time = await chrome.runtime.sendMessage({type: "last_update_time"});
-  if (last_update_time && (Date.now() - last_update_time < UPDATE_INTERVAL)) {
-    return false;
-  }
-  return true;
-};
-
-const updateResume = async (resume, url) => {
-  await chrome.runtime.sendMessage({type: "update_resume", resume, url});
-}
-
 /// This function should return the main resume
 /// which is used as a root for the generation of other resumes.
 const getMasterResume = async () => {
@@ -62,36 +49,65 @@ const getMasterResume = async () => {
   return data.masterResume || null;
 };
 
-/// This is the main function that creates a resume from the document.
-/// Given a language model and a document, it returns the resume text.
-/// This should handle all prompting, and post processing of the resume.
-///
-/// Returns: Clean latex string of the resume.
-async function createResume(languageModel, document) {
-
+async function updateResume(resume, url) {
+    // Store the resume
+    const resumeData = await chrome.storage.local.get("resumes");
+    const resumes = resumeData.resumes || {};
+    resumes[url] = resume;
+    await chrome.storage.local.set({ resumes });
 }
 
-async function awake (document){
-  
-  if (!await shouldUpdate()) {
-    console.log('Already updated recently, skipping...');
-    return;
-  }
+
+async function main (document){
 
   const languageModel = await createLanguageModel();
   if (!languageModel) {
     console.error('Language Model unavailable');
     return;
   }
+  const masterResume = await getMasterResume();
   console.log('Creating Resume....');
 
-  // const article = document.querySelector('article');
-  const resume = await createResume(languageModel, document)
+  // scripts.js
+  const resume = await createResume(languageModel, document, masterResume)
 
   updateResume(resume, document.URL);
   console.log('Resume updated');
 }
 
+// add button listeners
+const hook = () => { 
+    const button = document.getElementById('button-prompt');
+    if (button) {
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.textContent = 'Generating...';
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab) {
+                    const target_document = await chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        func: () => {
+                            return document;
+                        }
+                    });
+
+                    if (target_document) {
+                        await main(target_document[0].result);
+                    }
+                    
+                }
+            } catch (error) {
+                console.error('Error processing page:', error);
+                alert('An error occurred while generating the resume.');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Generate for Page';
+            }
+        });
+    }
+}
+
 (async () => {
-    await awake(document);
+    await hook();
 })();

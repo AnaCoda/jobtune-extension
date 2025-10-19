@@ -1,37 +1,33 @@
+const buttonPrompt = document.body.querySelector('#button-prompt');
+const elementLoading = document.body.querySelector('#loading');
+const elementError = document.body.querySelector('#error');
+const elementResponse = document.body.querySelector('#response');
+const elementResumeLatex = document.body.querySelector('#resume-latex');
+const fileInput = document.body.querySelector('#file-input');
+const clearFileBtn = document.body.querySelector('#clear-file');
+
 class ResumesExplorer {
     constructor() {
         this.resumes = {};
-        this.filteredResumes = {};
+        this.master_resume = null;
         this.init();
     }
 
     async init() {
         await this.loadResumes();
-        await this.loadMasterResumeDetails();
+        await this.loadMasterResume();
         this.bindEvents();
         this.renderResumes();
+        this.renderMasterResumeDetails();
     }
 
-    async loadMasterResumeDetails() {
+    async loadMasterResume() {
         try {
             const data = await chrome.storage.local.get(['masterResume', 'masterResumeLastUpdate']);
-            const masterResumeDetails = document.getElementById('masterResumeDetails');
-            if (data.masterResume) {
-                const lastUpdate = data.masterResumeLastUpdate ? new Date(data.masterResumeLastUpdate) : null;
-                const formattedDate = lastUpdate ? this.formatDate(lastUpdate) : 'Not available';
-                const resumeSnippet = this.truncateText(data.masterResume, 50);
-                masterResumeDetails.innerHTML = `
-                    <p>Status: Loaded</p>
-                    <p>Last Updated: ${formattedDate}</p>
-                    <p>Snippet: ${this.escapeHtml(resumeSnippet)}</p>
-                `;
-            } else {
-                masterResumeDetails.innerHTML = '<p>No master resume uploaded.</p>';
-            }
+            this.master_resume = data.masterResume || null;
+            this.master_resume_last_update = data.masterResumeLastUpdate || null;
         } catch (error) {
             console.error('Error loading master resume details:', error);
-            const masterResumeDetails = document.getElementById('masterResumeDetails');
-            masterResumeDetails.innerHTML = '<p>Error loading details.</p>';
         }
     }
 
@@ -49,16 +45,9 @@ class ResumesExplorer {
     }
 
     bindEvents() {
-        // Refresh button
         document.getElementById('refreshBtn').addEventListener('click', async () => {
             await this.loadResumes();
             this.renderResumes();
-        });
-
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
-            this.filterResumes(e.target.value);
         });
 
         // Clear all button
@@ -74,6 +63,23 @@ class ResumesExplorer {
         // Save master resume
         document.getElementById('saveMasterResumeBtn').addEventListener('click', () => {
             this.saveMasterResume();
+        });
+
+        // Event delegation for resume actions
+        const resumesContainer = document.getElementById('resumes-container');
+        resumesContainer.addEventListener('click', (e) => {
+            const target = e.target;
+            const url = target.dataset.url;
+
+            if (target.classList.contains('view-btn')) {
+                this.viewFullResume(url);
+            } else if (target.classList.contains('copy-btn')) {
+                this.saveResumeToClipboard(url);
+                target.textContent = 'Copied!';
+                setTimeout(() => target.textContent = 'Copy', 2000);
+            } else if (target.classList.contains('delete-btn')) {
+                this.deleteResume(url);
+            }
         });
     }
 
@@ -96,7 +102,8 @@ class ResumesExplorer {
                     masterResumeLastUpdate: lastUpdate 
                 });
                 alert('Master resume saved successfully!');
-                await this.loadMasterResumeDetails();
+                await this.loadMasterResume();
+                this.renderMasterResumeDetails();
             } catch (error) {
                 console.error('Error saving master resume:', error);
                 alert('Failed to save master resume.');
@@ -105,30 +112,9 @@ class ResumesExplorer {
         reader.readAsText(file);
     }
 
-    filterResumes(query) {
-        if (!query.trim()) {
-            this.filteredResumes = { ...this.resumes };
-        } else {
-            const lowerQuery = query.toLowerCase();
-            this.filteredResumes = {};
-            
-            Object.entries(this.resumes).forEach(([url, resume]) => {
-                if (url.toLowerCase().includes(lowerQuery) || 
-                    resume.toLowerCase().includes(lowerQuery)) {
-                    this.filteredResumes[url] = resume;
-                }
-            });
-        }
-        this.renderResumes();
-    }
-
     renderResumes() {
-        const container = document.getElementById('resumesContainer');
-        const countElement = document.getElementById('resumeCount');
-        
+        const container = document.getElementById('resumes-container');
         const resumeCount = Object.keys(this.filteredResumes).length;
-        countElement.textContent = `${resumeCount} ${resumeCount === 1 ? 'resume' : 'resumes'}`;
-
         if (resumeCount === 0) {
             container.innerHTML = this.getEmptyState();
             return;
@@ -144,7 +130,6 @@ class ResumesExplorer {
             .join('');
 
         container.innerHTML = resumesHTML;
-        this.bindResumeEvents();
     }
 
     createResumeHTML(url, resume) {
@@ -154,100 +139,21 @@ class ResumesExplorer {
         const domain = this.extractDomain(url);
 
         return `
-            <div class="resume-item" data-url="${this.escapeHtml(url)}">
+            <div class="resume-item" data-url="${url}">
                 <div class="resume-header">
-                    <a href="${this.escapeHtml(url)}" class="resume-url" target="_blank" title="${this.escapeHtml(url)}">
+                    <a href="${url}" class="resume-url" target="_blank" title="${url}">
                         ${this.escapeHtml(domain)}
                     </a>
                     <span class="resume-date">${formattedDate}</span>
                 </div>
                 <div class="resume-content">${this.escapeHtml(truncatedResume)}</div>
                 <div class="resume-actions">
-                    <button class="action-btn view-btn" data-url="${this.escapeHtml(url)}">View Full</button>
-                    <button class="action-btn copy-btn" data-url="${this.escapeHtml(url)}">Copy</button>
-                    <button class="action-btn delete-btn" data-url="${this.escapeHtml(url)}">Delete</button>
+                    <button class="action-btn view-btn" data-url="${url}">View Full</button>
+                    <button class="action-btn copy-btn" data-url="${url}">Copy</button>
+                    <button class="action-btn delete-btn" data-url="${url}">Delete</button>
                 </div>
             </div>
         `;
-    }
-
-    bindResumeEvents() {
-        // View full resume
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const url = btn.getAttribute('data-url');
-                this.showFullResume(url);
-            });
-        });
-
-        // Copy resume
-        document.querySelectorAll('.copy-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const url = btn.getAttribute('data-url');
-                await this.saveResumeToClipboard(url);
-                btn.textContent = 'Copied';
-                setTimeout(() => {
-                    btn.textContent = 'Copy';
-                }, 2000);
-            });
-        });
-
-        // Delete resume
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const url = btn.getAttribute('data-url');
-                await this.deleteResume(url);
-            });
-        });
-
-        // Click to expand
-        document.querySelectorAll('.resume-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('action-btn') && !e.target.closest('.resume-actions')) {
-                    const url = item.getAttribute('data-url');
-                    this.showFullResume(url);
-                }
-            });
-        });
-    }
-
-    showFullResume(url) {
-        const resume = this.resumes[url];
-        if (!resume) return;
-
-        const modal = this.createModal(url, resume);
-        document.body.appendChild(modal);
-        modal.style.display = 'block';
-
-        // Close modal events
-        modal.querySelector('.close-btn').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-    }
-
-    createModal(url, resume) {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Full Resume</h3>
-                    <button class="close-btn">&times;</button>
-                </div>
-                <div class="modal-url">${this.escapeHtml(url)}</div>
-                <div class="modal-resume">${this.escapeHtml(resume)}</div>
-            </div>
-        `;
-        return modal;
     }
 
     async deleteResume(url) {
@@ -283,48 +189,6 @@ class ResumesExplorer {
         }
     }
 
-    exportResumes() {
-        const exportData = {
-            exportDate: new Date().toISOString(),
-            resumes: Object.entries(this.resumes).map(([url, resume]) => ({
-                url,
-                resume,
-                lastUpdate: this.lastUpdateTimes[url] || null
-            }))
-        };
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `resumes-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    getEmptyState() {
-        const hasAnyData = Object.keys(this.resumes).length > 0;
-        
-        if (!hasAnyData) {
-            return `
-                <div class="no-resumes">
-                    <h3>No resumes yet</h3>
-                    <p>Visit a job application page to create your first tailored resume!</p>
-                </div>
-            `;
-        } else {
-            return `
-                <div class="no-resumes">
-                    <h3>No matching resumes</h3>
-                    <p>Try adjusting your search terms.</p>
-                </div>
-            `;
-        }
-    }
-
     truncateText(text, maxLength) {
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength).replace(/\s+\S*$/, '') + '...';
@@ -353,12 +217,6 @@ class ResumesExplorer {
         return date.toLocaleDateString();
     }
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
     async saveResumeToClipboard(url) {
         const resume = this.resumes[url];
         if (!resume) return;
@@ -368,6 +226,107 @@ class ResumesExplorer {
         } catch (error) {
             console.error('Failed to copy resume to clipboard:', error);
         }
+    }
+
+    filterResumes(searchTerm) {
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+        if (!lowerCaseSearchTerm) {
+            this.filteredResumes = { ...this.resumes };
+        } else {
+            this.filteredResumes = Object.entries(this.resumes)
+                .filter(([url, resume]) => {
+                    return url.toLowerCase().includes(lowerCaseSearchTerm) ||
+                           resume.toLowerCase().includes(lowerCaseSearchTerm);
+                })
+                .reduce((obj, [url, resume]) => {
+                    obj[url] = resume;
+                    return obj;
+                }, {});
+        }
+        this.renderResumes();
+    }
+
+    exportResumes() {
+        try {
+            const dataStr = JSON.stringify({
+                resumes: this.resumes,
+                lastUpdateTimes: this.lastUpdateTimes
+            }, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'resumes_export.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error exporting resumes:', error);
+            alert('Failed to export resumes.');
+        }
+    }
+
+    viewFullResume(url) {
+        const resume = this.resumes[url];
+        if (!resume) return;
+
+        const modal = document.createElement('div');
+        modal.classList.add('modal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h3>Resume for ${this.extractDomain(url)}</h3>
+                <pre>${this.escapeHtml(resume)}</pre>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const closeButton = modal.querySelector('.close-button');
+        closeButton.onclick = () => {
+            document.body.removeChild(modal);
+        };
+
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                document.body.removeChild(modal);
+            }
+        };
+    }
+
+    renderMasterResumeDetails() {
+        const detailsContainer = document.getElementById('master-resume-details');
+        if (this.master_resume) {
+            const lastUpdate = this.master_resume_last_update ?
+                this.formatDate(new Date(this.master_resume_last_update)) : 'Unknown';
+            detailsContainer.innerHTML = `
+                <p>
+                    Master resume loaded. Last updated: ${lastUpdate}.
+                    <br>
+                    Length: ${this.master_resume.length} characters.
+                </p>
+            `;
+        } else {
+            detailsContainer.innerHTML = '<p>No master resume uploaded.</p>';
+        }
+    }
+
+    getEmptyState() {
+        return `
+            <div class="empty-state">
+                <p>No resumes generated yet.</p>
+                <p>Use the fields above to generate a new resume.</p>
+            </div>
+        `;
+    }
+
+    escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 }
 
