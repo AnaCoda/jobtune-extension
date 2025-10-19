@@ -24,7 +24,7 @@ async function runPrompt(prompt) {
         console.log('Prompt failed');
         console.error(e);
         console.log('Prompt:', prompt);
-        reset();
+        // reset(); // Removed undefined function call
         throw e;
     }
 }
