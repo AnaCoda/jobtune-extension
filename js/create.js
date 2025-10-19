@@ -1,4 +1,4 @@
-LANGUAGE_MODEL_OPTIONS = {
+const LANGUAGE_MODEL_OPTIONS = {
     initialPrompts: [
         { role: 'system', content: 'You are a concise assistant who is an expert in resumes.' }
     ],
