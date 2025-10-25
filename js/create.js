@@ -42,7 +42,7 @@ async function updateResume(resume, url) {
 
 
 async function main (document){
-
+  
   const languageModel = await createLanguageModel();
   if (!languageModel) {
     console.error('Language Model unavailable');
@@ -68,17 +68,20 @@ const hook = () => {
             try {
                 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 if (tab) {
-                    const target_document = await chrome.scripting.executeScript({
+                    const injection_result = await chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         func: () => {
-                            return document;
+                            // Return only the serializable innerHTML string
+                            return document.documentElement.innerHTML;
                         }
                     });
 
-                    if (target_document) {
-                        await main(target_document[0].result);
+                    if (injection_result && injection_result[0]) {
+                        // The result is an array containing the return value
+                        const html_content = injection_result[0].result;
+                        // Now you can work with the string content in your main function
+                        await main(html_content);
                     }
-                    
                 }
             } catch (error) {
                 console.error('Error processing page:', error);
