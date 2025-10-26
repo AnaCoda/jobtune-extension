@@ -13,53 +13,77 @@ const LANGUAGE_MODEL_OPTIONS = {
 };
 
 async function createLanguageModel() {
-  console.log('Creating language model...');
-  const availability = await LanguageModel.availability();
-  
-  if (availability === 'unavailable') {
-    // The Summarizer API isn't usable.
-    return undefined;
-  } 
-  const languageModel = await LanguageModel.create(LANGUAGE_MODEL_OPTIONS);
+    console.log('Creating language model...');
+    const availability = await LanguageModel.availability();
 
-  return languageModel;
+    if (availability === 'unavailable') {
+        // The Summarizer API isn't usable.
+        return undefined;
+    }
+    const languageModel = await LanguageModel.create(LANGUAGE_MODEL_OPTIONS);
+
+    return languageModel;
 }
 
 /// This function should return the main resume
 /// which is used as a root for the generation of other resumes.
 const getMasterResume = async () => {
-  const data = await chrome.storage.local.get("masterResume");
-  return data.masterResume || null;
+    const data = await chrome.storage.local.get("masterResume");
+    return data.masterResume || null;
 };
 
 async function updateResume(resume, url) {
-    // Store the resume
-    const resumeData = await chrome.storage.local.get("resumes");
+    // Store the resume with timestamp
+    const resumeData = await chrome.storage.local.get(['resumes', 'lastUpdateTimes']);
     const resumes = resumeData.resumes || {};
+    const lastUpdateTimes = resumeData.lastUpdateTimes || {};
+    
     resumes[url] = resume;
-    await chrome.storage.local.set({ resumes });
+    lastUpdateTimes[url] = Date.now();
+    
+    await chrome.storage.local.set({ 
+        resumes,
+        lastUpdateTimes
+    });
 }
 
+async function exportResume(resume, url) {
+    const engine = new PdfTeXEngine();
+    await engine.loadEngine();
+    engine.writeMemFSFile("main.tex", resume);
+    engine.setEngineMainFile("main.tex");
+    // r contains PDF binray and compilation log.
+    let r = await engine.compileLaTeX();
+    // save the PDF to chrome storage
+    const resumeData = await chrome.storage.local.get("exportedResumes");
+    const exportedResumes = resumeData.exportedResumes || {};
+    exportedResumes[url] = r.pdf;
+    await chrome.storage.local.set({ exportedResumes });
+}
 
-async function main (document){
-  
-  const languageModel = await createLanguageModel();
-  if (!languageModel) {
-    console.error('Language Model unavailable');
-    return;
-  }
-  const masterResume = await getMasterResume();
-  console.log('Creating Resume....');
+async function main(document) {
 
-  // scripts.js
-  const resume = await createResume(languageModel, document, masterResume)
+    const languageModel = await createLanguageModel();
+    if (!languageModel) {
+        console.error('Language Model unavailable');
+        return;
+    }
+    const masterResume = await getMasterResume();
+    console.log('Creating Resume....');
 
-  updateResume(resume, document.URL);
-  console.log('Resume updated');
+    // scripts.js
+    const resume = await createResume(languageModel, document, masterResume)
+
+    await updateResume(resume, document.URL);
+    console.log('Resume updated');
+
+    console.log('Exporting Resume to PDF....');
+    await exportResume(resume, document.URL);
+    console.log('Resume exported');
 }
 
 // add button listeners
-const hook = () => { 
+const hook = () => {
     const button = document.getElementById('button-prompt');
     if (button) {
         button.addEventListener('click', async () => {

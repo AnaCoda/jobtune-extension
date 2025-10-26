@@ -188,6 +188,15 @@ hr {
     padding: 0.2rem 0.5rem;
 }
 
+.download-pdf-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.download-pdf-btn:hover {
+    background-color: #218838;
+}
+
 .empty-state {
     text-align: center;
     padding: 2rem;

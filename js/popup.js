@@ -7,6 +7,7 @@ const elementResumeLatex = document.body.querySelector('#resume-latex');
 class ResumesExplorer {
     constructor() {
         this.resumes = {};
+        this.exportedResumes = {};
         this.master_resume = null;
         this.init();
     }
@@ -14,9 +15,24 @@ class ResumesExplorer {
     async init() {
         await this.loadResumes();
         await this.loadMasterResume();
+        await this.loadExportedResumes();
         this.bindEvents();
         this.renderResumes();
         this.renderMasterResumeDetails();
+        this.listenForStorageChanges();
+    }
+
+    listenForStorageChanges() {
+        // Listen for changes in chrome storage and refresh
+        chrome.storage.onChanged.addListener((changes, namespace) => {
+            if (namespace === 'local') {
+                if (changes.resumes || changes.exportedResumes || changes.lastUpdateTimes) {
+                    this.loadResumes();
+                    this.loadExportedResumes();
+                    this.renderResumes();
+                }
+            }
+        });
     }
 
     async loadMasterResume() {
@@ -42,9 +58,20 @@ class ResumesExplorer {
         }
     }
 
+    async loadExportedResumes() {
+        try {
+            const data = await chrome.storage.local.get(['exportedResumes']);
+            this.exportedResumes = data.exportedResumes || {};
+        } catch (error) {
+            console.error('Error loading exported resumes:', error);
+            this.exportedResumes = {};
+        }
+    }
+
     bindEvents() {
         document.getElementById('refreshBtn').addEventListener('click', async () => {
             await this.loadResumes();
+            await this.loadExportedResumes();
             this.renderResumes();
         });
 
@@ -77,6 +104,8 @@ class ResumesExplorer {
                 setTimeout(() => target.textContent = 'Copy', 2000);
             } else if (target.classList.contains('delete-btn')) {
                 this.deleteResume(url);
+            } else if (target.classList.contains('download-pdf-btn')) {
+                this.downloadPDF(url);
             }
         });
     }
@@ -135,6 +164,7 @@ class ResumesExplorer {
         const formattedDate = lastUpdate ? this.formatDate(new Date(lastUpdate)) : 'Unknown';
         const truncatedResume = this.truncateText(resume, 150);
         const domain = this.extractDomain(url);
+        const hasPDF = this.exportedResumes[url] !== undefined;
 
         return `
             <div class="resume-item" data-url="${url}">
@@ -148,6 +178,7 @@ class ResumesExplorer {
                 <div class="resume-actions">
                     <button class="action-btn view-btn" data-url="${url}">View Full</button>
                     <button class="action-btn copy-btn" data-url="${url}">Copy</button>
+                    ${hasPDF ? `<button class="action-btn download-pdf-btn" data-url="${url}">Download PDF</button>` : ''}
                     <button class="action-btn delete-btn" data-url="${url}">Delete</button>
                 </div>
             </div>
@@ -161,10 +192,12 @@ class ResumesExplorer {
             delete this.resumes[url];
             delete this.filteredResumes[url];
             delete this.lastUpdateTimes[url];
+            delete this.exportedResumes[url];
 
             await chrome.storage.local.set({ 
                 resumes: this.resumes,
-                lastUpdateTimes: this.lastUpdateTimes 
+                lastUpdateTimes: this.lastUpdateTimes,
+                exportedResumes: this.exportedResumes
             });
 
             this.renderResumes();
@@ -177,10 +210,11 @@ class ResumesExplorer {
         if (!confirm('Are you sure you want to delete all resumes? This action cannot be undone.')) return;
 
         try {
-            await chrome.storage.local.remove(['resumes', 'lastUpdateTimes']);
+            await chrome.storage.local.remove(['resumes', 'lastUpdateTimes', 'exportedResumes']);
             this.resumes = {};
             this.filteredResumes = {};
             this.lastUpdateTimes = {};
+            this.exportedResumes = {};
             this.renderResumes();
         } catch (error) {
             console.error('Error clearing resumes:', error);
@@ -279,6 +313,31 @@ class ResumesExplorer {
                 document.body.removeChild(modal);
             }
         };
+    }
+
+    downloadPDF(url) {
+        const pdfData = this.exportedResumes[url];
+        if (!pdfData) {
+            alert('PDF not found for this resume.');
+            return;
+        }
+
+        try {
+            // Convert the PDF data to a blob and download it
+            const blob = new Blob([pdfData], { type: 'application/pdf' });
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            const domain = this.extractDomain(url);
+            a.download = `resume_${domain}_${Date.now()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            alert('Failed to download PDF.');
+        }
     }
 
     renderMasterResumeDetails() {
