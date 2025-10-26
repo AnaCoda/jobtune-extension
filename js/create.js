@@ -68,7 +68,7 @@ async function exportResume(resume, url) {
     // save the PDF to chrome storage
     const resumeData = await chrome.storage.local.get("exportedResumes");
     const exportedResumes = resumeData.exportedResumes || {};
-    exportedResumes[url] = r.pdf;
+    exportedResumes[url] = Array.from(r.pdf); // Convert Uint8Array to regular array
     await chrome.storage.local.set({ exportedResumes });
     console.log('PDF saved successfully!');
 }

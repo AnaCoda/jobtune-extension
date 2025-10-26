@@ -323,8 +323,9 @@ class ResumesExplorer {
         }
 
         try {
-            // Convert the PDF data to a blob and download it
-            const blob = new Blob([pdfData], { type: 'application/pdf' });
+            // Convert the PDF data array back to Uint8Array and then to a blob
+            const pdfUint8Array = new Uint8Array(pdfData);
+            const blob = new Blob([pdfUint8Array], { type: 'application/pdf' });
             const blobUrl = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = blobUrl;

@@ -210,9 +210,10 @@ function generateBestResume(scoredItems, pageLimit = 1) {
     
     // Add optional items in order of relevance
     // TODO: In a real implementation, we would need to render to PDF and check page count
-    const maxContentLength = pageLimit * 3500;
+    const maxContentLength = pageLimit * 8000;
     let currentLength = selectedItems.reduce((sum, si) => sum + si.item.content.length, 0);
     
+
     for (const scoredItem of optional) {
         const itemLength = scoredItem.item.content.length;
         if (currentLength + itemLength <= maxContentLength) {
