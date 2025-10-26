@@ -73,7 +73,7 @@ async function exportResume(resume, url) {
     console.log('PDF saved successfully!');
 }
 
-async function main(document) {
+async function main(htmlContent, url) {
 
     const languageModel = await createLanguageModel();
     if (!languageModel) {
@@ -84,13 +84,13 @@ async function main(document) {
     console.log('Creating Resume....');
 
     // scripts.js
-    const resume = await createResume(languageModel, document, masterResume)
+    const resume = await createResume(languageModel, htmlContent, masterResume)
 
-    await updateResume(resume, document.URL);
+    await updateResume(resume, url);
     console.log('Resume updated');
 
     console.log('Exporting Resume to PDF....');
-    await exportResume(resume, document.URL);
+    await exportResume(resume, url);
     console.log('Resume exported');
 }
 
@@ -116,7 +116,7 @@ const hook = () => {
                         // The result is an array containing the return value
                         const html_content = injection_result[0].result;
                         // Now you can work with the string content in your main function
-                        await main(html_content);
+                        await main(html_content, tab.url);
                     }
                 }
             } catch (error) {
