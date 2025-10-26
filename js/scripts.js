@@ -155,7 +155,7 @@ async function rateResumeItems(resumeItems, jobDescription, languageModel) {
         }
         
         // Rate the item against the job description (TODO)
-        score = await getScoreForItem(languageModel, item.humanReadableContent, jobDescription);
+        score = await getScoreForItem(languageModel, item.humanReadableContent, jobDescription.textContent, jobDescription.jobTitle);
         scoredItems.push({ item, score });
     }
     return scoredItems;
@@ -164,11 +164,12 @@ async function rateResumeItems(resumeItems, jobDescription, languageModel) {
 /// This function gets a relevance score for a resume item against a job description.
 /// It uses the language model to get a score between 0 and 1.
 ///
-async function getScoreForItem(languageModel, itemContent, jobDescription) {
+async function getScoreForItem(languageModel, itemContent, jobDescription, jobTitle) {
+    const jobTitleContext = jobTitle ? `Job Title: ${jobTitle}\n\n` : '';
     const prompt = `
 You are an expert career advisor. Given the following job description and resume item, rate how relevant the resume item is to the job description on a scale from 0 to 1, where 1 means highly relevant and 0 means not relevant at all.
 
-Job Description:
+${jobTitleContext}Job Description:
 ${jobDescription}
 
 Resume Item:
@@ -275,6 +276,10 @@ function parseHTML(htmlString) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, "text/html");
 
+    // Extract job title from first h1 tag
+    const h1Tag = doc.querySelector("h1");
+    const jobTitle = h1Tag ? h1Tag.textContent.trim() : null;
+
     // Extract all URLs from common elements
     const urls = [];
     doc.querySelectorAll("[href], [src]").forEach(el => {
@@ -293,24 +298,30 @@ function parseHTML(htmlString) {
     textContent = doc.body.textContent.trim().replace(/\s+/g, " ");
     }
 
-    return textContent;
+    return { textContent, jobTitle };
 }
 
 /// This is the main function that creates a resume from the document.
 /// Given a language model and a document, it returns the resume text.
 /// This should handle all prompting, and post processing of the resume.
 ///
-/// Returns: Clean latex string of the resume.
+/// Returns: Object with { resume: string, jobTitle: string }
 async function createResume(languageModel, document, masterResume) {
-    cleanContent = parseHTML(document)
-    console.log(cleanContent)
-    console.log('Cleaned content length:', cleanContent.length);
+    const cleanContent = parseHTML(document);
+    console.log(cleanContent);
+    console.log('Cleaned content length:', cleanContent.textContent.length);
+    console.log('Job title:', cleanContent.jobTitle);
+    
     splits = splitResume(masterResume);
     console.log(`Split resume into ${splits.length} items.`);
     ratedSplits = await rateResumeItems(splits, cleanContent, languageModel);
     console.log(`Rated resume items with scores:`, ratedSplits);
     const bestResume = generateBestResume(ratedSplits, document.pageLimit || 1);
-    return bestResume;
+    
+    return { 
+        resume: bestResume, 
+        jobTitle: cleanContent.jobTitle 
+    };
 }
 
 // Export for Node.js testing

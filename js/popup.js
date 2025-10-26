@@ -7,7 +7,6 @@ const elementResumeLatex = document.body.querySelector('#resume-latex');
 class ResumesExplorer {
     constructor() {
         this.resumes = {};
-        this.exportedResumes = {};
         this.master_resume = null;
         this.init();
     }
@@ -15,24 +14,9 @@ class ResumesExplorer {
     async init() {
         await this.loadResumes();
         await this.loadMasterResume();
-        await this.loadExportedResumes();
         this.bindEvents();
         this.renderResumes();
         this.renderMasterResumeDetails();
-        this.listenForStorageChanges();
-    }
-
-    listenForStorageChanges() {
-        // Listen for changes in chrome storage and refresh
-        chrome.storage.onChanged.addListener(async (changes, namespace) => {
-            if (namespace === 'local') {
-                if (changes.resumes || changes.exportedResumes || changes.lastUpdateTimes) {
-                    await this.loadResumes();
-                    await this.loadExportedResumes();
-                    this.renderResumes();
-                }
-            }
-        });
     }
 
     async loadMasterResume() {
@@ -47,31 +31,22 @@ class ResumesExplorer {
 
     async loadResumes() {
         try {
-            const data = await chrome.storage.local.get(['resumes', 'lastUpdateTimes']);
+            const data = await chrome.storage.local.get(['resumes', 'lastUpdateTimes', 'jobTitles']);
             this.resumes = data.resumes || {};
             this.lastUpdateTimes = data.lastUpdateTimes || {};
+            this.jobTitles = data.jobTitles || {};
             this.filteredResumes = { ...this.resumes };
         } catch (error) {
             console.error('Error loading resumes:', error);
             this.resumes = {};
             this.filteredResumes = {};
-        }
-    }
-
-    async loadExportedResumes() {
-        try {
-            const data = await chrome.storage.local.get(['exportedResumes']);
-            this.exportedResumes = data.exportedResumes || {};
-        } catch (error) {
-            console.error('Error loading exported resumes:', error);
-            this.exportedResumes = {};
+            this.jobTitles = {};
         }
     }
 
     bindEvents() {
         document.getElementById('refreshBtn').addEventListener('click', async () => {
             await this.loadResumes();
-            await this.loadExportedResumes();
             this.renderResumes();
         });
 
@@ -104,8 +79,6 @@ class ResumesExplorer {
                 setTimeout(() => target.textContent = 'Copy', 2000);
             } else if (target.classList.contains('delete-btn')) {
                 this.deleteResume(url);
-            } else if (target.classList.contains('download-pdf-btn')) {
-                this.downloadPDF(url);
             }
         });
     }
@@ -164,7 +137,7 @@ class ResumesExplorer {
         const formattedDate = lastUpdate ? this.formatDate(new Date(lastUpdate)) : 'Unknown';
         const truncatedResume = this.truncateText(resume, 150);
         const domain = this.extractDomain(url);
-        const hasPDF = this.exportedResumes[url] !== undefined;
+        const jobTitle = this.jobTitles[url];
 
         return `
             <div class="resume-item" data-url="${url}">
@@ -174,11 +147,11 @@ class ResumesExplorer {
                     </a>
                     <span class="resume-date">${formattedDate}</span>
                 </div>
+                ${jobTitle ? `<div class="job-title">${this.escapeHtml(jobTitle)}</div>` : ''}
                 <div class="resume-content">${this.escapeHtml(truncatedResume)}</div>
                 <div class="resume-actions">
                     <button class="action-btn view-btn" data-url="${url}">View Full</button>
                     <button class="action-btn copy-btn" data-url="${url}">Copy</button>
-                    ${hasPDF ? `<button class="action-btn download-pdf-btn" data-url="${url}">Download PDF</button>` : ''}
                     <button class="action-btn delete-btn" data-url="${url}">Delete</button>
                 </div>
             </div>
@@ -192,12 +165,12 @@ class ResumesExplorer {
             delete this.resumes[url];
             delete this.filteredResumes[url];
             delete this.lastUpdateTimes[url];
-            delete this.exportedResumes[url];
+            delete this.jobTitles[url];
 
             await chrome.storage.local.set({ 
                 resumes: this.resumes,
                 lastUpdateTimes: this.lastUpdateTimes,
-                exportedResumes: this.exportedResumes
+                jobTitles: this.jobTitles
             });
 
             this.renderResumes();
@@ -210,11 +183,11 @@ class ResumesExplorer {
         if (!confirm('Are you sure you want to delete all resumes? This action cannot be undone.')) return;
 
         try {
-            await chrome.storage.local.remove(['resumes', 'lastUpdateTimes', 'exportedResumes']);
+            await chrome.storage.local.remove(['resumes', 'lastUpdateTimes', 'jobTitles']);
             this.resumes = {};
             this.filteredResumes = {};
             this.lastUpdateTimes = {};
-            this.exportedResumes = {};
+            this.jobTitles = {};
             this.renderResumes();
         } catch (error) {
             console.error('Error clearing resumes:', error);
@@ -271,7 +244,8 @@ class ResumesExplorer {
         try {
             const dataStr = JSON.stringify({
                 resumes: this.resumes,
-                lastUpdateTimes: this.lastUpdateTimes
+                lastUpdateTimes: this.lastUpdateTimes,
+                jobTitles: this.jobTitles
             }, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -313,32 +287,6 @@ class ResumesExplorer {
                 document.body.removeChild(modal);
             }
         };
-    }
-
-    downloadPDF(url) {
-        const pdfData = this.exportedResumes[url];
-        if (!pdfData) {
-            alert('PDF not found for this resume.');
-            return;
-        }
-
-        try {
-            // Convert the PDF data array back to Uint8Array and then to a blob
-            const pdfUint8Array = new Uint8Array(pdfData);
-            const blob = new Blob([pdfUint8Array], { type: 'application/pdf' });
-            const blobUrl = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            const domain = this.extractDomain(url);
-            a.download = `resume_${domain}_${Date.now()}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(blobUrl);
-        } catch (error) {
-            console.error('Error downloading PDF:', error);
-            alert('Failed to download PDF.');
-        }
     }
 
     renderMasterResumeDetails() {

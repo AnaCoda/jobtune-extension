@@ -44,18 +44,57 @@ async function getOrCreateLatexEngine() {
     return globalLatexEngine;
 }
 
-async function updateResume(resume, url) {
-    // Store the resume with timestamp
-    const resumeData = await chrome.storage.local.get(['resumes', 'lastUpdateTimes']);
+// ------- Progress UI helpers -------
+function getProgressEls() {
+    return {
+        container: document.getElementById('progress-container'),
+        status: document.getElementById('progress-status'),
+        fill: document.getElementById('progress-fill'),
+        latex: document.getElementById('latex-indicator'),
+        button: document.getElementById('button-prompt'),
+    };
+}
+
+function showProgress(visible) {
+    const { container } = getProgressEls();
+    if (!container) return;
+    container.hidden = !visible;
+}
+
+function setProgress(percent, statusText) {
+    const { fill, status } = getProgressEls();
+    if (fill) fill.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    if (status && statusText) status.textContent = statusText;
+}
+
+function setLatexIndicator(visible, text) {
+    const { latex, status } = getProgressEls();
+    if (latex) latex.hidden = !visible;
+    if (status && text) status.textContent = text;
+}
+
+function setBusyState(busy) {
+    const { button } = getProgressEls();
+    if (button) button.disabled = !!busy;
+}
+
+async function updateResume(resume, url, jobTitle) {
+    // Store the resume with timestamp and job title
+    const resumeData = await chrome.storage.local.get(['resumes', 'lastUpdateTimes', 'jobTitles']);
     const resumes = resumeData.resumes || {};
     const lastUpdateTimes = resumeData.lastUpdateTimes || {};
+    const jobTitles = resumeData.jobTitles || {};
     
     resumes[url] = resume;
     lastUpdateTimes[url] = Date.now();
+    if (jobTitle) {
+        jobTitles[url] = jobTitle;
+    }
     
     await chrome.storage.local.set({ 
         resumes,
-        lastUpdateTimes
+        lastUpdateTimes,
+        jobTitles
     });
 }
 
@@ -64,6 +103,8 @@ async function exportResume(resume, url) {
     latexEngine.writeMemFSFile("main.tex", resume);
     latexEngine.setEngineMainFile("main.tex");
     // r contains PDF binary and compilation log.
+    setLatexIndicator(true, 'Compiling LaTeX to PDF…');
+    setProgress(80, 'Compiling LaTeX…');
     let r = await latexEngine.compileLaTeX();
     
     console.log('Compilation status:', r.status);
@@ -82,27 +123,38 @@ async function exportResume(resume, url) {
     exportedResumes[url] = Array.from(r.pdf); // Convert Uint8Array to regular array
     await chrome.storage.local.set({ exportedResumes });
     console.log('PDF saved successfully!');
+    setLatexIndicator(false);
+    setProgress(100, 'Done');
 }
 
 async function main(htmlContent, url) {
-
+    showProgress(true);
+    setBusyState(true);
+    setProgress(5, 'Initializing language model…');
     const languageModel = await createLanguageModel();
     if (!languageModel) {
         console.error('Language Model unavailable');
+        setProgress(0, 'Language Model unavailable');
+        setBusyState(false);
+        showProgress(false);
         return;
     }
+    setProgress(15, 'Loading master resume…');
     const masterResume = await getMasterResume();
     console.log('Creating Resume....');
 
     // scripts.js
-    const resume = await createResume(languageModel, htmlContent, masterResume)
-
-    await updateResume(resume, url);
+    setProgress(30, 'Parsing page…');
+    const resumeResult = await createResume(languageModel, htmlContent, masterResume);
+    setProgress(60, 'Saving draft…');
+    await updateResume(resumeResult.resume, url, resumeResult.jobTitle);
     console.log('Resume updated');
 
     console.log('Exporting Resume to PDF....');
-    await exportResume(resume, url);
+    await exportResume(resumeResult.resume, url);
     console.log('Resume exported');
+    setBusyState(false);
+    setTimeout(() => showProgress(false), 800);
 }
 
 // add button listeners
@@ -136,6 +188,9 @@ const hook = () => {
             } finally {
                 button.disabled = false;
                 button.textContent = 'Generate for Page';
+                setBusyState(false);
+                setLatexIndicator(false);
+                // keep progress visible for failure states; hide only if success handler did
             }
         });
     }

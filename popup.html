@@ -16,6 +16,17 @@
         <div id="loading" class="text" hidden><span class="blink">...</span></div>
         <div id="error" class="text" hidden></div>
 
+        <div id="progress-container" hidden>
+            <div id="progress-status">Preparing…</div>
+            <div class="progress-bar" aria-label="progress">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+            <div id="latex-indicator" class="latex-indicator" hidden>
+                <span class="dot"></span>
+                <span>Compiling LaTeX to PDF…</span>
+            </div>
+        </div>
+
         <hr>
 
         <div id="resumes-explorer">
