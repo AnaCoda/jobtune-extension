@@ -24,11 +24,11 @@ class ResumesExplorer {
 
     listenForStorageChanges() {
         // Listen for changes in chrome storage and refresh
-        chrome.storage.onChanged.addListener((changes, namespace) => {
+        chrome.storage.onChanged.addListener(async (changes, namespace) => {
             if (namespace === 'local') {
                 if (changes.resumes || changes.exportedResumes || changes.lastUpdateTimes) {
-                    this.loadResumes();
-                    this.loadExportedResumes();
+                    await this.loadResumes();
+                    await this.loadExportedResumes();
                     this.renderResumes();
                 }
             }
