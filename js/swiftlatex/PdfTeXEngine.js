@@ -60,7 +60,10 @@ var EngineStatus;
     EngineStatus[EngineStatus["Busy"] = 3] = "Busy";
     EngineStatus[EngineStatus["Error"] = 4] = "Error";
 })(EngineStatus = exports.EngineStatus || (exports.EngineStatus = {}));
-var ENGINE_PATH = 'swiftlatexpdftex.js';
+// Use chrome.runtime.getURL if available (Chrome extension context), otherwise use relative path
+var ENGINE_PATH = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
+    ? chrome.runtime.getURL('js/swiftlatex/swiftlatexpdftex.js')
+    : 'swiftlatexpdftex.js';
 var CompileResult = /** @class */ (function () {
     function CompileResult() {
         this.pdf = undefined;
@@ -86,19 +89,42 @@ var PdfTeXEngine = /** @class */ (function () {
                         }
                         this.latexWorkerStatus = EngineStatus.Init;
                         return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                _this.latexWorker = new Worker(ENGINE_PATH);
+                                console.log('Creating Worker with path:', ENGINE_PATH);
+                                try {
+                                    _this.latexWorker = new Worker(ENGINE_PATH);
+                                    console.log('Worker created successfully');
+                                } catch (error) {
+                                    console.error('Failed to create Worker:', error);
+                                    reject(error);
+                                    return;
+                                }
                                 _this.latexWorker.onmessage = function (ev) {
+                                    console.log('Worker message received:', ev.data);
                                     var data = ev['data'];
                                     var cmd = data['result'];
                                     if (cmd === 'ok') {
+                                        console.log('Worker ready!');
                                         _this.latexWorkerStatus = EngineStatus.Ready;
                                         resolve();
                                     }
                                     else {
+                                        console.error('Worker returned error:', data);
                                         _this.latexWorkerStatus = EngineStatus.Error;
-                                        reject();
+                                        reject(data);
                                     }
                                 };
+                                _this.latexWorker.onerror = function (error) {
+                                    console.error('Worker error:', error);
+                                    _this.latexWorkerStatus = EngineStatus.Error;
+                                    reject(error);
+                                };
+                                // Add timeout to detect if worker never responds
+                                setTimeout(function () {
+                                    if (_this.latexWorkerStatus === EngineStatus.Init) {
+                                        console.error('Worker timeout - no response after 5 seconds');
+                                        reject(new Error('Worker initialization timeout'));
+                                    }
+                                }, 5000);
                             })];
                     case 1:
                         _a.sent();

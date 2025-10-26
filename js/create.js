@@ -52,13 +52,25 @@ async function exportResume(resume, url) {
     await engine.loadEngine();
     engine.writeMemFSFile("main.tex", resume);
     engine.setEngineMainFile("main.tex");
-    // r contains PDF binray and compilation log.
+    // r contains PDF binary and compilation log.
     let r = await engine.compileLaTeX();
+    
+    console.log('Compilation status:', r.status);
+    console.log('Compilation log:', r.log);
+    
+    if (r.status !== 0 || !r.pdf) {
+        console.error('PDF compilation failed!');
+        console.error('Full log:', r.log);
+        alert('PDF compilation failed. Check console for details.');
+        return;
+    }
+    
     // save the PDF to chrome storage
     const resumeData = await chrome.storage.local.get("exportedResumes");
     const exportedResumes = resumeData.exportedResumes || {};
     exportedResumes[url] = r.pdf;
     await chrome.storage.local.set({ exportedResumes });
+    console.log('PDF saved successfully!');
 }
 
 async function main(document) {
