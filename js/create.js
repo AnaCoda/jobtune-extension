@@ -32,6 +32,18 @@ const getMasterResume = async () => {
     return data.masterResume || null;
 };
 
+let globalLatexEngine = null;
+
+async function getOrCreateLatexEngine() {
+    if (!globalLatexEngine) {
+        console.log('Creating new PdfTeXEngine instance...');
+        globalLatexEngine = new PdfTeXEngine();
+        await globalLatexEngine.loadEngine();
+        console.log('PdfTeXEngine loaded and ready');
+    }
+    return globalLatexEngine;
+}
+
 async function updateResume(resume, url) {
     // Store the resume with timestamp
     const resumeData = await chrome.storage.local.get(['resumes', 'lastUpdateTimes']);
@@ -48,12 +60,11 @@ async function updateResume(resume, url) {
 }
 
 async function exportResume(resume, url) {
-    const engine = new PdfTeXEngine();
-    await engine.loadEngine();
-    engine.writeMemFSFile("main.tex", resume);
-    engine.setEngineMainFile("main.tex");
+    const latexEngine = await getOrCreateLatexEngine();
+    latexEngine.writeMemFSFile("main.tex", resume);
+    latexEngine.setEngineMainFile("main.tex");
     // r contains PDF binary and compilation log.
-    let r = await engine.compileLaTeX();
+    let r = await latexEngine.compileLaTeX();
     
     console.log('Compilation status:', r.status);
     console.log('Compilation log:', r.log);
