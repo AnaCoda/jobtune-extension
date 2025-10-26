@@ -4,10 +4,19 @@
   "version": "1.0",
   "manifest_version": 3,
   "permissions": ["storage", "scripting","activeTab"],
-  "host_permissions": ["<all_urls>"], 
+  "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "View Page Summaries",
     "default_icon": "assets/icon.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["js/swiftlatex/swiftlatexpdftex.js", "js/swiftlatex/swiftlatexpdftex.wasm"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

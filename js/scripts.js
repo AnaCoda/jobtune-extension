@@ -189,6 +189,7 @@ Please provide only the numeric score between 0 and 1.
 
 /// This function creates the best possible resume by selecting items based on scores
 /// and ensuring the result fits within the page limit.
+/// Guarantees at least one EXPERIENCE and one PROJECT item if they exist.
 /// 
 /// Returns: String containing the final LaTeX resume text
 function generateBestResume(scoredItems, pageLimit = 1) {
@@ -202,18 +203,41 @@ function generateBestResume(scoredItems, pageLimit = 1) {
     const alwaysInclude = itemsWithIndices.filter(si => si.item.alwaysInclude || si.item.type === ResumeItemType.OTHER);
     const optional = itemsWithIndices.filter(si => !si.item.alwaysInclude && si.item.type !== ResumeItemType.OTHER);
     
-    // Sort optional items by score (descending)
-    optional.sort((a, b) => b.score - a.score);
+    // Further separate optional items by type
+    const experiences = optional.filter(si => si.item.type === ResumeItemType.EXPERIENCE);
+    const projects = optional.filter(si => si.item.type === ResumeItemType.PROJECT);
+    
+    // Sort by score (descending)
+    experiences.sort((a, b) => b.score - a.score);
+    projects.sort((a, b) => b.score - a.score);
     
     // Start with all always-include items
     const selectedItems = [...alwaysInclude];
     
-    // Add optional items in order of relevance
-    // TODO: In a real implementation, we would need to render to PDF and check page count
-    const maxContentLength = pageLimit * 3500;
+    const maxContentLength = pageLimit * 8000;
     let currentLength = selectedItems.reduce((sum, si) => sum + si.item.content.length, 0);
     
-    for (const scoredItem of optional) {
+    // Ensure at least one experience if available
+    if (experiences.length > 0) {
+        const topExperience = experiences[0];
+        selectedItems.push(topExperience);
+        currentLength += topExperience.item.content.length;
+        experiences.shift(); // Remove from the pool
+    }
+    
+    // Ensure at least one project if available
+    if (projects.length > 0) {
+        const topProject = projects[0];
+        selectedItems.push(topProject);
+        currentLength += topProject.item.content.length;
+        projects.shift(); // Remove from the pool
+    }
+    
+    // Combine remaining optional items and sort by score
+    const remainingOptional = [...experiences, ...projects].sort((a, b) => b.score - a.score);
+    
+    // Add remaining optional items in order of relevance
+    for (const scoredItem of remainingOptional) {
         const itemLength = scoredItem.item.content.length;
         if (currentLength + itemLength <= maxContentLength) {
             selectedItems.push(scoredItem);
