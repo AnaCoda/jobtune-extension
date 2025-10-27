@@ -3,11 +3,11 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Resume Generator</title>
+        <title>Job Tune Resume Generator</title>
         <link rel="stylesheet" href="css/popup.css">
     </head>
     <body>
-        <h1>Resume Thingy</h1>
+        <h1>JobTune</h1>
 
         <button id="button-prompt" class="primary">Tune Current Job</button>
 
@@ -23,7 +23,7 @@
             </div>
             <div id="latex-indicator" class="latex-indicator" hidden>
                 <span class="dot"></span>
-                <span>Compiling LaTeX to PDF…</span>
+                <span>Tuning your resume…</span>
             </div>
         </div>
 
@@ -32,14 +32,13 @@
         <div id="resumes-explorer">            
             <div id="master-resume-section">
                 <div id="master-resume-header" class="collapsible-header">
-                    <h3>Master Resume</h3>
+                    <h3>Base Resume</h3>
                     <span class="collapse-icon">▼</span>
                 </div>
                 <div id="master-resume-content" class="collapsible-content collapsed">
                     <div id="master-resume-details"></div>
                     <input type="file" id="masterResumeInput" accept=".txt,.md,.tex">
-                    <button id="saveMasterResumeBtn">Save Master Resume</button>
-                    <div id="master-resume-message" class="validation-message" style="display: none;"></div>
+                    <button id="saveMasterResumeBtn">Save Base Resume</button><div id="master-resume-message" class="validation-message" style="display: none;"></div>
                 </div>
             </div>
         

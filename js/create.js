@@ -2,7 +2,9 @@
 const ALLOWED_URL_PATTERNS = [
     /^https?:\/\/(www\.)?linkedin\.com\/jobs\/view\/\d+/i,           // LinkedIn job postings
     /^https?:\/\/(www\.)?linkedin\.com\/jobs\/collections\/\w+/i,    // LinkedIn job collections
-    /^https?:\/\/(www\.)?linkedin\.com\/jobs\/search/i                // LinkedIn job search results
+    /^https?:\/\/(www\.)?linkedin\.com\/jobs\/search/i,               // LinkedIn job search results
+    /^https?:\/\/.*\.myworkdayjobs\.com\/.*\/job\//i,                 // Workday job postings (subdomain pattern)
+    /^https?:\/\/[^\/]+\/[^\/]*job[^\/]*/i                            // Generic Workday-style job URLs with /job path
 ];
 
 /**
@@ -165,14 +167,14 @@ async function main(htmlContent, url) {
         showProgress(false);
         return;
     }
-    setProgress(15, 'Loading master resume…');
+    setProgress(20, 'Loading master resume…');
     const masterResume = await getMasterResume();
     console.log('Creating Resume....');
 
     // scripts.js
-    setProgress(30, 'Parsing page…');
+    setProgress(35, 'Parsing job posting…');
     const resumeResult = await createResume(languageModel, htmlContent, masterResume);
-    setProgress(60, 'Saving draft…');
+    setProgress(85, 'Saving resume…');
     await updateResume(resumeResult.resume, url, resumeResult.jobTitle);
     console.log('Resume updated');
     
