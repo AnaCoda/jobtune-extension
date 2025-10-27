@@ -139,21 +139,87 @@ class ResumesExplorer {
         const reader = new FileReader();
         reader.onload = async (event) => {
             const content = event.target.result;
+            
+            // Validate resume format
+            const validation = this.validateResumeFormat(content);
+            
+            if (!validation.isValid) {
+                const messageEl = document.getElementById('master-resume-message');
+                if (messageEl) {
+                    messageEl.textContent = validation.message;
+                    messageEl.className = 'validation-message error';
+                    messageEl.style.display = 'block';
+                    
+                    // Hide message after 5 seconds
+                    setTimeout(() => {
+                        messageEl.style.display = 'none';
+                    }, 5000);
+                }
+                return;
+            }
+            
             const lastUpdate = Date.now();
             try {
                 await chrome.storage.local.set({ 
                     masterResume: content,
                     masterResumeLastUpdate: lastUpdate 
                 });
-                alert('Master resume saved successfully!');
+                
+                // Show success message
+                const messageEl = document.getElementById('master-resume-message');
+                if (messageEl) {
+                    messageEl.textContent = validation.message;
+                    messageEl.className = 'validation-message success';
+                    messageEl.style.display = 'block';
+                    
+                    // Hide message after 3 seconds
+                    setTimeout(() => {
+                        messageEl.style.display = 'none';
+                    }, 3000);
+                }
+                
                 await this.loadMasterResume();
                 this.renderMasterResumeDetails();
             } catch (error) {
                 console.error('Error saving master resume:', error);
-                alert('Failed to save master resume.');
+                const messageEl = document.getElementById('master-resume-message');
+                if (messageEl) {
+                    messageEl.textContent = 'Failed to save master resume.';
+                    messageEl.className = 'validation-message error';
+                    messageEl.style.display = 'block';
+                }
             }
         };
         reader.readAsText(file);
+    }
+
+    validateResumeFormat(content) {
+        // Count different sections that should be split
+        const experienceMatches = content.match(/\\resumeSubheading/g);
+        const projectMatches = content.match(/\\resumeProjectHeading/g);
+        const experienceCount = experienceMatches ? experienceMatches.length : 0;
+        const projectCount = projectMatches ? projectMatches.length : 0;
+        
+        // Check for essential sections (preamble + document begin/end)
+        const hasPreamble = content.includes('\\documentclass');
+        const hasDocumentBegin = content.includes('\\begin{document}');
+        const hasDocumentEnd = content.includes('\\end{document}');
+        
+        // Total parts: preamble, experiences, projects, ending
+        // We need at least 4 splittable parts
+        const totalParts = (hasPreamble ? 1 : 0) + experienceCount + projectCount + (hasDocumentEnd ? 1 : 0);
+        
+        if (!hasPreamble || !hasDocumentBegin || !hasDocumentEnd || totalParts < 4) {
+            return {
+                isValid: false,
+                message: '❌ Not in Jake\'s Resume format. Please use the template from Overleaf.'
+            };
+        }
+        
+        return {
+            isValid: true,
+            message: `✓ Jake's Resume format confirmed! Found ${experienceCount} experience(s) and ${projectCount} project(s).`
+        };
     }
 
     renderResumes() {
