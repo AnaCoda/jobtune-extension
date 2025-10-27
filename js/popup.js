@@ -89,6 +89,11 @@ class ResumesExplorer {
             this.saveMasterResume();
         });
 
+        // Collapsible master resume section
+        document.getElementById('master-resume-header').addEventListener('click', () => {
+            this.toggleMasterResumeSection();
+        });
+
         // Event delegation for resume actions
         const resumesContainer = document.getElementById('resumes-container');
         resumesContainer.addEventListener('click', (e) => {
@@ -107,6 +112,19 @@ class ResumesExplorer {
                 this.deleteResume(url);
             }
         });
+    }
+
+    toggleMasterResumeSection() {
+        const content = document.getElementById('master-resume-content');
+        const icon = document.querySelector('.collapse-icon');
+        
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            icon.textContent = '▲';
+        } else {
+            content.classList.add('collapsed');
+            icon.textContent = '▼';
+        }
     }
 
     async saveMasterResume() {
@@ -161,22 +179,21 @@ class ResumesExplorer {
     createResumeHTML(url, resume) {
         const lastUpdate = this.lastUpdateTimes[url];
         const formattedDate = lastUpdate ? this.formatDate(new Date(lastUpdate)) : 'Unknown';
-        const truncatedResume = this.truncateText(resume, 150);
-        const domain = this.extractDomain(url);
         const jobTitle = this.jobTitles[url];
 
         return `
             <div class="resume-item" data-url="${url}">
-                <div class="resume-header">
-                    <a href="${url}" class="resume-url" target="_blank" title="${url}">
-                        ${this.escapeHtml(domain)}
+                <div class="resume-title-section">
+                    <h4 class="resume-job-title">${jobTitle ? this.escapeHtml(jobTitle) : 'Untitled Position'}</h4>
+                    <a href="${url}" class="resume-url-link" target="_blank" title="${url}">
+                        ${this.escapeHtml(url)}
                     </a>
+                </div>
+                <div class="resume-meta">
                     <span class="resume-date">${formattedDate}</span>
                 </div>
-                ${jobTitle ? `<div class="job-title">${this.escapeHtml(jobTitle)}</div>` : ''}
-                <div class="resume-content">${this.escapeHtml(truncatedResume)}</div>
                 <div class="resume-actions">
-                    <button class="action-btn view-btn" data-url="${url}">View Full</button>
+                    <button class="action-btn view-btn" data-url="${url}">View LaTeX</button>
                     <button class="action-btn copy-btn" data-url="${url}">Copy</button>
                     <button class="action-btn extract-pdf-btn" data-url="${url}">Extract PDF</button>
                     <button class="action-btn delete-btn" data-url="${url}">Delete</button>

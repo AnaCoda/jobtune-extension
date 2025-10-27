@@ -9,7 +9,7 @@
     <body>
         <h1>Resume Thingy</h1>
 
-        <button id="button-prompt" class="primary">Generate for Page</button>
+        <button id="button-prompt" class="primary">Tune Current Job</button>
 
         <div id="resume-latex" class="text" hidden></div>
         <div id="response" class="text" hidden></div>
@@ -29,14 +29,17 @@
 
         <hr>
 
-        <div id="resumes-explorer">
-            <h2>Resumes Explorer</h2>
-            
+        <div id="resumes-explorer">            
             <div id="master-resume-section">
-                <h3>Master Resume</h3>
-                <div id="master-resume-details"></div>
-                <input type="file" id="masterResumeInput" accept=".txt,.md,.tex">
-                <button id="saveMasterResumeBtn">Save Master Resume</button>
+                <div id="master-resume-header" class="collapsible-header">
+                    <h3>Master Resume</h3>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div id="master-resume-content" class="collapsible-content collapsed">
+                    <div id="master-resume-details"></div>
+                    <input type="file" id="masterResumeInput" accept=".txt,.md,.tex">
+                    <button id="saveMasterResumeBtn">Save Master Resume</button>
+                </div>
             </div>
         
             <hr>

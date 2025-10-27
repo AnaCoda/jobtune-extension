@@ -1,3 +1,19 @@
+// Allowed URL patterns for resume generation
+const ALLOWED_URL_PATTERNS = [
+    /^https?:\/\/(www\.)?linkedin\.com\/jobs\/view\/\d+/i,           // LinkedIn job postings
+    /^https?:\/\/(www\.)?linkedin\.com\/jobs\/collections\/\w+/i,    // LinkedIn job collections
+    /^https?:\/\/(www\.)?linkedin\.com\/jobs\/search/i                // LinkedIn job search results
+];
+
+/**
+ * Check if a URL is valid for resume generation
+ * @param {string} url - The URL to validate
+ * @returns {boolean} - True if URL matches allowed patterns
+ */
+function isValidJobUrl(url) {
+    return ALLOWED_URL_PATTERNS.some(pattern => pattern.test(url));
+}
+
 const LANGUAGE_MODEL_OPTIONS = {
     initialPrompts: [
         { role: 'system', content: 'You are a concise assistant who is an expert in resumes.' }
@@ -168,13 +184,64 @@ async function main(htmlContent, url) {
 // add button listeners
 const hook = () => {
     const button = document.getElementById('button-prompt');
+    const statusMessage = document.createElement('div');
+    statusMessage.id = 'url-status-message';
+    statusMessage.style.cssText = 'margin-top: 0.5rem; font-size: 0.9em; text-align: center;';
+    
     if (button) {
+        // Insert status message after button
+        button.parentNode.insertBefore(statusMessage, button.nextSibling);
+        
+        // Check URL validity on load and update button state
+        const updateButtonState = async () => {
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab && tab.url) {
+                    const isValid = isValidJobUrl(tab.url);
+                    button.disabled = !isValid;
+                    
+                    if (isValid) {
+                        statusMessage.textContent = '✓ Job detected - You got this!';
+                        statusMessage.style.color = '#10b981';
+                    } else {
+                        statusMessage.textContent = '⚠ Please navigate to a supported job posting page';
+                        statusMessage.style.color = '#f59e0b';
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking URL:', error);
+            }
+        };
+        
+        // Initial check
+        updateButtonState();
+        
+        // Listen for tab updates
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+            if (changeInfo.url) {
+                updateButtonState();
+            }
+        });
+        
+        // Listen for tab activation (switching tabs)
+        chrome.tabs.onActivated.addListener(() => {
+            updateButtonState();
+        });
+        
         button.addEventListener('click', async () => {
             button.disabled = true;
             button.textContent = 'Generating...';
+            statusMessage.textContent = '';
+            
             try {
                 const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 if (tab) {
+                    // Double-check URL validity
+                    if (!isValidJobUrl(tab.url)) {
+                        alert('This page is not a supported job posting. Please navigate to a valid job page.');
+                        return;
+                    }
+                    
                     const injection_result = await chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         func: () => {
@@ -198,6 +265,7 @@ const hook = () => {
                 button.textContent = 'Generate for Page';
                 setBusyState(false);
                 setLatexIndicator(false);
+                updateButtonState(); // Restore status message
                 // keep progress visible for failure states; hide only if success handler did
             }
         });
