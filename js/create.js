@@ -103,8 +103,6 @@ async function exportResume(resume, url) {
     latexEngine.writeMemFSFile("main.tex", resume);
     latexEngine.setEngineMainFile("main.tex");
     // r contains PDF binary and compilation log.
-    setLatexIndicator(true, 'Compiling LaTeX to PDF…');
-    setProgress(80, 'Compiling LaTeX…');
     let r = await latexEngine.compileLaTeX();
     
     console.log('Compilation status:', r.status);
@@ -113,18 +111,30 @@ async function exportResume(resume, url) {
     if (r.status !== 0 || !r.pdf) {
         console.error('PDF compilation failed!');
         console.error('Full log:', r.log);
-        alert('PDF compilation failed. Check console for details.');
-        return;
+        throw new Error('PDF compilation failed. Check console for details.');
     }
     
-    // save the PDF to chrome storage
-    const resumeData = await chrome.storage.local.get("exportedResumes");
-    const exportedResumes = resumeData.exportedResumes || {};
-    exportedResumes[url] = Array.from(r.pdf); // Convert Uint8Array to regular array
-    await chrome.storage.local.set({ exportedResumes });
-    console.log('PDF saved successfully!');
-    setLatexIndicator(false);
-    setProgress(100, 'Done');
+    // Create a blob from the PDF data and trigger download
+    const blob = new Blob([r.pdf], { type: 'application/pdf' });
+    const pdfUrl = URL.createObjectURL(blob);
+    
+    // Extract a filename from the URL or use a default
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace(/^www\./, '');
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `resume_${domain}_${timestamp}.pdf`;
+    
+    // Trigger download
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(pdfUrl);
+    
+    console.log('PDF downloaded successfully!');
+    return { success: true, filename };
 }
 
 async function main(htmlContent, url) {
@@ -149,10 +159,8 @@ async function main(htmlContent, url) {
     setProgress(60, 'Saving draft…');
     await updateResume(resumeResult.resume, url, resumeResult.jobTitle);
     console.log('Resume updated');
-
-    console.log('Exporting Resume to PDF....');
-    await exportResume(resumeResult.resume, url);
-    console.log('Resume exported');
+    
+    setProgress(100, 'Resume created successfully!');
     setBusyState(false);
     setTimeout(() => showProgress(false), 800);
 }

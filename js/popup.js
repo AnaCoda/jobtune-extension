@@ -17,6 +17,30 @@ class ResumesExplorer {
         this.bindEvents();
         this.renderResumes();
         this.renderMasterResumeDetails();
+        this.setupStorageListener();
+    }
+
+    setupStorageListener() {
+        // Listen for changes to Chrome storage
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            if (areaName === 'local') {
+                // Check if resumes, lastUpdateTimes, or jobTitles have changed
+                if (changes.resumes || changes.lastUpdateTimes || changes.jobTitles) {
+                    console.log('Storage changed, refreshing resumes...');
+                    this.loadResumes().then(() => {
+                        this.renderResumes();
+                    });
+                }
+                
+                // Check if master resume has changed
+                if (changes.masterResume || changes.masterResumeLastUpdate) {
+                    console.log('Master resume changed, refreshing...');
+                    this.loadMasterResume().then(() => {
+                        this.renderMasterResumeDetails();
+                    });
+                }
+            }
+        });
     }
 
     async loadMasterResume() {
@@ -77,6 +101,8 @@ class ResumesExplorer {
                 this.saveResumeToClipboard(url);
                 target.textContent = 'Copied!';
                 setTimeout(() => target.textContent = 'Copy', 2000);
+            } else if (target.classList.contains('extract-pdf-btn')) {
+                this.extractPDF(url, target);
             } else if (target.classList.contains('delete-btn')) {
                 this.deleteResume(url);
             }
@@ -152,6 +178,7 @@ class ResumesExplorer {
                 <div class="resume-actions">
                     <button class="action-btn view-btn" data-url="${url}">View Full</button>
                     <button class="action-btn copy-btn" data-url="${url}">Copy</button>
+                    <button class="action-btn extract-pdf-btn" data-url="${url}">Extract PDF</button>
                     <button class="action-btn delete-btn" data-url="${url}">Delete</button>
                 </div>
             </div>
@@ -260,6 +287,94 @@ class ResumesExplorer {
             console.error('Error exporting resumes:', error);
             alert('Failed to export resumes.');
         }
+    }
+
+    async extractPDF(url, buttonElement) {
+        const resume = this.resumes[url];
+        if (!resume) {
+            alert('Resume not found.');
+            return;
+        }
+
+        const originalText = buttonElement.textContent;
+        buttonElement.disabled = true;
+        buttonElement.textContent = 'Compiling...';
+
+        try {
+            // Import the exportResume function from create.js by loading the script
+            // We need to use dynamic import or call the function directly
+            // For now, we'll replicate the PDF generation logic here
+            
+            // Create or get the LaTeX engine
+            let latexEngine = window.globalLatexEngine;
+            if (!latexEngine) {
+                console.log('Creating new PdfTeXEngine instance...');
+                latexEngine = new PdfTeXEngine();
+                await latexEngine.loadEngine();
+                console.log('PdfTeXEngine loaded and ready');
+                window.globalLatexEngine = latexEngine;
+            }
+
+            latexEngine.writeMemFSFile("main.tex", resume);
+            latexEngine.setEngineMainFile("main.tex");
+            
+            console.log('Compiling LaTeX to PDF...');
+            const result = await latexEngine.compileLaTeX();
+            
+            console.log('Compilation status:', result.status);
+            console.log('Compilation log:', result.log);
+            
+            if (result.status !== 0 || !result.pdf) {
+                console.error('PDF compilation failed!');
+                console.error('Full log:', result.log);
+                throw new Error('PDF compilation failed. Check console for details.');
+            }
+            
+            // Create a blob from the PDF data and trigger download
+            const blob = new Blob([result.pdf], { type: 'application/pdf' });
+            const pdfUrl = URL.createObjectURL(blob);
+            
+            // Extract a filename from the URL or use a default
+            const urlObj = new URL(url);
+            const domain = urlObj.hostname.replace(/^www\./, '');
+            const jobTitle = this.jobTitles[url];
+            const timestamp = new Date().toISOString().split('T')[0];
+            const jobTitlePart = jobTitle ? `_${jobTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}` : '';
+            const filename = `resume_${domain}${jobTitlePart}_${timestamp}.pdf`;
+            
+            // Trigger download
+            const a = document.createElement('a');
+            a.href = pdfUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(pdfUrl);
+            
+            console.log('PDF downloaded successfully!');
+            buttonElement.textContent = 'Downloaded!';
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+                buttonElement.disabled = false;
+            }, 2000);
+        } catch (error) {
+            console.error('Error extracting PDF:', error);
+            alert('Failed to generate PDF. Check console for details.');
+            buttonElement.textContent = originalText;
+            buttonElement.disabled = false;
+        }
+    }
+
+    saveResumeToClipboard(url) {
+        const resume = this.resumes[url];
+        if (!resume) return;
+
+        navigator.clipboard.writeText(resume).then(() => {
+            console.log('Resume copied to clipboard');
+        }).catch(err => {
+            console.error('Failed to copy resume:', err);
+            alert('Failed to copy to clipboard.');
+        });
     }
 
     viewFullResume(url) {
