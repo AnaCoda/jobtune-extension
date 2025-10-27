@@ -276,9 +276,17 @@ function parseHTML(htmlString) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, "text/html");
 
-    // Extract job title from first h1 tag
+    // Extract job title from first h1 tag, fallback to h2 if not found
+    let jobTitle = null;
     const h1Tag = doc.querySelector("h1");
-    const jobTitle = h1Tag ? h1Tag.textContent.trim() : null;
+    if (h1Tag && h1Tag.textContent.trim().length > 0) {
+        jobTitle = h1Tag.textContent.trim();
+    } else {
+        const h2Tag = doc.querySelector("h2");
+        if (h2Tag) {
+            jobTitle = h2Tag.textContent.trim();
+        }
+    }
 
     // Extract all URLs from common elements
     const urls = [];
@@ -292,10 +300,10 @@ function parseHTML(htmlString) {
     const article = doc.querySelector("article");
 
     if (article) {
-    textContent = article.textContent.trim().replace(/\s+/g, " ");
+        textContent = article.textContent.trim().replace(/\s+/g, " ");
     } else {
-    // Fallback if no <article> exists
-    textContent = doc.body.textContent.trim().replace(/\s+/g, " ");
+        // Fallback if no <article> exists
+        textContent = doc.body.textContent.trim().replace(/\s+/g, " ");
     }
 
     return { textContent, jobTitle };
@@ -307,15 +315,28 @@ function parseHTML(htmlString) {
 ///
 /// Returns: Object with { resume: string, jobTitle: string }
 async function createResume(languageModel, document, masterResume) {
+    // Helper to update progress if available
+    const updateProgress = (percent, message) => {
+        if (typeof setProgress === 'function') {
+            setProgress(percent, message);
+        }
+    };
+    
+    updateProgress(35, 'Parsing job posting…');
     const cleanContent = parseHTML(document);
     console.log(cleanContent);
     console.log('Cleaned content length:', cleanContent.textContent.length);
     console.log('Job title:', cleanContent.jobTitle);
     
+    updateProgress(45, 'Splitting resume sections…');
     splits = splitResume(masterResume);
     console.log(`Split resume into ${splits.length} items.`);
+    
+    updateProgress(50, 'Ranking resume sections…');
     ratedSplits = await rateResumeItems(splits, cleanContent, languageModel);
     console.log(`Rated resume items with scores:`, ratedSplits);
+    
+    updateProgress(80, 'Creating tailored resume…');
     const bestResume = generateBestResume(ratedSplits, document.pageLimit || 1);
     
     return { 
