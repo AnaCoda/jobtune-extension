@@ -5,6 +5,23 @@ const ResumeItemType = {
     OTHER: 'OTHER'
 };
 
+// AI Configuration Manager
+async function getAIConfig() {
+    try {
+        const data = await chrome.storage.local.get(['useLocalAI', 'geminiApiKey']);
+        return {
+            useLocalAI: data.useLocalAI !== undefined ? data.useLocalAI : true,
+            geminiApiKey: data.geminiApiKey || null
+        };
+    } catch (error) {
+        console.error('Error getting AI config:', error);
+        return {
+            useLocalAI: true,
+            geminiApiKey: null
+        };
+    }
+}
+
 /// Class representing a resume item
 class ResumeItem {
     constructor(type, content, alwaysInclude = false) {
@@ -141,6 +158,10 @@ function splitResume(resumeText) {
 async function rateResumeItems(resumeItems, jobDescription, languageModel) {
     const scoredItems = [];
     
+    // Get AI config once for all items
+    const aiConfig = await getAIConfig();
+    console.log('Using AI config:', aiConfig);
+    
     for (const item of resumeItems) {
         // Always include items get max score
         if (item.alwaysInclude) {
@@ -154,8 +175,8 @@ async function rateResumeItems(resumeItems, jobDescription, languageModel) {
             continue;
         }
         
-        // Rate the item against the job description (TODO)
-        score = await getScoreForItem(languageModel, item.humanReadableContent, jobDescription.textContent, jobDescription.jobTitle);
+        // Rate the item against the job description
+        score = await getScoreForItem(languageModel, item.humanReadableContent, jobDescription.textContent, jobDescription.jobTitle, aiConfig);
         scoredItems.push({ item, score });
     }
     return scoredItems;
@@ -164,7 +185,7 @@ async function rateResumeItems(resumeItems, jobDescription, languageModel) {
 /// This function gets a relevance score for a resume item against a job description.
 /// It uses the language model to get a score between 0 and 1.
 ///
-async function getScoreForItem(languageModel, itemContent, jobDescription, jobTitle) {
+async function getScoreForItem(languageModel, itemContent, jobDescription, jobTitle, aiConfig = null) {
     const jobTitleContext = jobTitle ? `Job Title: ${jobTitle}\n\n` : '';
     const prompt = `
 You are an expert career advisor. Given the following job description and resume item, rate how relevant the resume item is to the job description on a scale from 0 to 1, where 1 means highly relevant and 0 means not relevant at all.
@@ -177,7 +198,7 @@ ${itemContent}
 
 Please provide only the numeric score between 0 and 1.
 `;
-    const response = await runPrompt(prompt, languageModel);
+    const response = await runPrompt(prompt, languageModel, aiConfig);
     console.debug('Score response:', response);
     const scoreText = response.trim();
     const score = parseFloat(scoreText);
@@ -258,13 +279,21 @@ function generateBestResume(scoredItems, pageLimit = 1) {
 /// handling errors appropriately.
 ///
 /// Returns: The response from the language model.
-async function runPrompt(prompt, languageModel) {
+async function runPrompt(prompt, languageModel, aiConfig = null) {
+    // Get AI config if not provided
+    if (!aiConfig) {
+        aiConfig = await getAIConfig();
+    }
+    
+    // For now, we'll use the local AI model regardless of settings
+    // In the next step, this will be updated to use Gemini API when useLocalAI is false
     try {
         return languageModel.prompt(prompt);
     } catch (e) {
         console.log('Prompt failed');
         console.error(e);
         console.log('Prompt:', prompt);
+        console.log('AI Config:', aiConfig);
         throw e;
     }
 }

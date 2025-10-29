@@ -523,9 +523,136 @@ class ResumesExplorer {
     }
 }
 
+// AI Settings Manager
+class AISettingsManager {
+    constructor() {
+        this.init();
+    }
+
+    async init() {
+        this.useLocalAICheckbox = document.getElementById('useLocalAI');
+        this.geminiApiSection = document.getElementById('gemini-api-section');
+        this.apiKeyInputContainer = document.getElementById('api-key-input-container');
+        this.geminiApiKeyInput = document.getElementById('geminiApiKey');
+        this.saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+        this.changeKeyBtn = document.getElementById('changeKeyBtn');
+
+        // Load saved settings
+        await this.loadSettings();
+
+        // Bind events
+        this.bindEvents();
+    }
+
+    async loadSettings() {
+        try {
+            const data = await chrome.storage.local.get(['useLocalAI', 'geminiApiKey']);
+            
+            // Default to true if not set
+            const useLocalAI = data.useLocalAI !== undefined ? data.useLocalAI : true;
+            this.useLocalAICheckbox.checked = useLocalAI;
+            
+            // Store API key state
+            this.hasApiKey = !!data.geminiApiKey;
+            
+            // Load API key if exists
+            if (data.geminiApiKey) {
+                this.geminiApiKeyInput.value = data.geminiApiKey;
+            }
+
+            // Update UI based on toggle state
+            this.updateUIState();
+        } catch (error) {
+            console.error('Error loading AI settings:', error);
+        }
+    }
+
+    bindEvents() {
+        // Toggle switch
+        this.useLocalAICheckbox.addEventListener('change', async () => {
+            await this.saveSettings();
+            this.updateUIState();
+        });
+
+        // Save API key button
+        this.saveApiKeyBtn.addEventListener('click', async () => {
+            await this.saveApiKey();
+        });
+
+        // Change key button
+        this.changeKeyBtn.addEventListener('click', () => {
+            this.showApiKeyInput();
+        });
+    }
+
+    updateUIState() {
+        const useLocalAI = this.useLocalAICheckbox.checked;
+        
+        if (useLocalAI) {
+            // Using Local AI: hide everything related to Gemini
+            this.geminiApiSection.hidden = true;
+            this.changeKeyBtn.hidden = true;
+        } else {
+            // Using Gemini API
+            if (this.hasApiKey) {
+                // API key exists: show "Change Key" button, hide input
+                this.changeKeyBtn.hidden = false;
+                this.geminiApiSection.hidden = true;
+                this.apiKeyInputContainer.hidden = true;
+            } else {
+                // No API key: hide button, show input
+                this.changeKeyBtn.hidden = true;
+                this.geminiApiSection.hidden = false;
+                this.apiKeyInputContainer.hidden = false;
+            }
+        }
+    }
+
+    showApiKeyInput() {
+        this.changeKeyBtn.hidden = true;
+        this.geminiApiSection.hidden = false;
+        this.apiKeyInputContainer.hidden = false;
+    }
+
+    async saveSettings() {
+        try {
+            const useLocalAI = this.useLocalAICheckbox.checked;
+            await chrome.storage.local.set({ useLocalAI });
+            console.log('AI settings saved:', { useLocalAI });
+        } catch (error) {
+            console.error('Error saving AI settings:', error);
+        }
+    }
+
+    async saveApiKey() {
+        try {
+            const apiKey = this.geminiApiKeyInput.value.trim();
+            if (!apiKey) {
+                alert('Please enter a valid API key.');
+                return;
+            }
+
+            await chrome.storage.local.set({ geminiApiKey: apiKey });
+            this.hasApiKey = true;
+            alert('API key saved successfully!');
+            console.log('Gemini API key saved');
+            
+            // Update UI to show status instead of input
+            this.updateUIState();
+        } catch (error) {
+            console.error('Error saving API key:', error);
+            alert('Failed to save API key.');
+        }
+    }
+}
+
 // Initialize when DOM is loaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new ResumesExplorer());
+    document.addEventListener('DOMContentLoaded', () => {
+        new ResumesExplorer();
+        new AISettingsManager();
+    });
 } else {
     new ResumesExplorer();
+    new AISettingsManager();
 }

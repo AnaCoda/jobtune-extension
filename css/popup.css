@@ -17,10 +17,18 @@ h1, h2, h3 {
 
 h1 {
     font-size: 1.75rem;
-    text-align: center;
-    margin-bottom: 1.25rem;
     color: #2c3e50;
     font-weight: 700;
+    margin: 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 h2 {
@@ -107,6 +115,21 @@ input[type="file"] {
 input[type="file"]:hover {
     border-color: #5e72e4;
     background-color: #f8f9ff;
+}
+
+input[type="password"] {
+    padding: 0.6rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    width: 100%;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+input[type="password"]:focus {
+    outline: none;
+    border-color: #5e72e4;
+    box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
 }
 
 hr {
@@ -601,6 +624,124 @@ button, .action-btn, .resume-item {
 
 #saveMasterResumeBtn:hover {
     background-color: #4c63d2;
+}
+
+/* AI Settings Section */
+#ai-settings-section {
+    margin-bottom: 1rem;
+}
+
+.ai-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    gap: 0.75rem;
+}
+
+.toggle-label input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background-color: #ccc;
+    border-radius: 13px;
+    transition: background-color 0.3s;
+}
+
+.toggle-switch::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-switch {
+    background-color: #5e72e4;
+}
+
+.toggle-label input[type="checkbox"]:checked + .toggle-switch::before {
+    transform: translateX(24px);
+}
+
+.toggle-text {
+    font-weight: 500;
+    color: #5e72e4;
+    font-size: 0.85rem;
+}
+
+.gemini-api-container {
+    padding: 1rem;
+    background-color: #f8f9ff;
+    border-radius: 6px;
+    border-left: 3px solid #5e72e4;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gemini-api-container label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+.save-api-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+    background-color: #5e72e4;
+    color: white;
+    font-weight: 600;
+}
+
+.save-api-btn:hover {
+    background-color: #4c63d2;
+}
+
+.change-key-btn {
+    background-color: transparent;
+    color: #5e72e4;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    font-weight: 500;
+    border: 1px solid #5e72e4;
+    box-shadow: none;
+}
+
+.change-key-btn:hover {
+    background-color: #f0f4ff;
+    border-color: #4c63d2;
+    color: #4c63d2;
+}
+
+#api-key-input-container {
+    animation: slideDown 0.3s ease;
 }
 
 /* Validation message styling */

@@ -7,7 +7,27 @@
         <link rel="stylesheet" href="css/popup.css">
     </head>
     <body>
-        <h1>JobTune</h1>
+        <div class="header-container">
+            <h1>JobTune</h1>
+            <div class="ai-toggle-container">
+                <label class="toggle-label">
+                    <input type="checkbox" id="useLocalAI" checked>
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-text">Local AI</span>
+                </label>
+                <button id="changeKeyBtn" class="change-key-btn" hidden>Change Key</button>
+            </div>
+        </div>
+
+        <div id="ai-settings-section">
+            <div id="gemini-api-section" class="gemini-api-container" hidden>
+                <div id="api-key-input-container" hidden>
+                    <label for="geminiApiKey">Gemini API Key:</label>
+                    <input type="password" id="geminiApiKey" placeholder="Enter your Gemini API key">
+                    <button id="saveApiKeyBtn" class="save-api-btn">Save Key</button>
+                </div>
+            </div>
+        </div>
 
         <button id="button-prompt" class="primary">Tune Current Job</button>
 
