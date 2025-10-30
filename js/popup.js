@@ -640,13 +640,80 @@ class AISettingsManager {
     }
 }
 
+// Welcome/info box manager
+class WelcomeManager {
+    constructor() {
+        this.init();
+    }
+
+    async init() {
+        this.overlay = document.getElementById('welcome-overlay');
+        this.box = document.getElementById('welcome-box');
+        if (!this.overlay || !this.box) return;
+
+        this.gotItBtn = document.getElementById('gotItBtn');
+        this.showWelcomeBtn = document.getElementById('showWelcomeBtn');
+
+        try {
+            const data = await chrome.storage.local.get(['hideWelcome']);
+            const hide = data.hideWelcome;
+            if (hide) {
+                this.overlay.hidden = true;
+                this.overlay.style.display = 'none';
+            } else {
+                // show overlay as flex container
+                this.overlay.hidden = false;
+                this.overlay.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error('Error reading welcome state:', err);
+        }
+
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        if (this.gotItBtn) {
+            this.gotItBtn.addEventListener('click', async () => {
+                try {
+                    await chrome.storage.local.set({ hideWelcome: true });
+                } catch (err) {
+                    console.error('Error saving welcome state:', err);
+                }
+                if (this.overlay) {
+                    this.overlay.hidden = true;
+                    this.overlay.style.display = 'none';
+                    this.overlay.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
+
+        if (this.showWelcomeBtn) {
+            this.showWelcomeBtn.addEventListener('click', async () => {
+                try {
+                    await chrome.storage.local.set({ hideWelcome: false });
+                } catch (err) {
+                    console.error('Error saving welcome state:', err);
+                }
+                if (this.overlay) {
+                    this.overlay.hidden = false;
+                    this.overlay.style.display = 'flex';
+                    this.overlay.removeAttribute('aria-hidden');
+                }
+            });
+        }
+    }
+}
+
 // Initialize when DOM is loaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         new ResumesExplorer();
         new AISettingsManager();
+        new WelcomeManager();
     });
 } else {
     new ResumesExplorer();
     new AISettingsManager();
+    new WelcomeManager();
 }
