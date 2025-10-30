@@ -1,7 +1,5 @@
 # <img src="./assets/icon.png" alt="Logo" width="30" style="vertical-align: middle; margin-right: 8px;" /> JobTune <!-- markdownlint-disable-line MD033 -->
 
-## JobTune
-
 ### AI-Powered Resume Tailoring Chrome Extension
 
 <br clear="left"/>
