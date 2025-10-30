@@ -1,4 +1,4 @@
-<img src="assets/icon.png" alt="JobTune Logo" width="32" height="32" style="float:left; margin-right:8px;">
+# <img src="./assets/icon.png" alt="Logo" width="30" style="vertical-align: middle; margin-right: 8px;" /> JobTune <!-- markdownlint-disable-line MD033 -->
 
 ## JobTune
 
