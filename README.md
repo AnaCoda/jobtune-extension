@@ -1,12 +1,12 @@
 # <img src="./assets/icon.png" alt="Logo" width="30" style="vertical-align: middle; margin-right: 8px;" /> JobTune <!-- markdownlint-disable-line MD033 -->
 
-**Keep your comprehensive master resume, let AI create focused one-page versions.**
+**Keep your comprehensive base resume, let AI create focused one-page versions.**
 
 JobTune intelligently shortens your multi-page resume by selecting only the most relevant experiences and projects for each job application. Upload your complete resume once, then generate tailored single-page versions that highlight what matters most to each employer.
 
 ## How It Works
 
-**Your master resume can have everything** - all your experiences, projects, skills, and achievements across multiple pages.
+**Your base resume can have everything** - all your experiences, projects, skills, and achievements across multiple pages.
 
 **JobTune creates one-page versions** by:
 
@@ -18,7 +18,7 @@ JobTune intelligently shortens your multi-page resume by selecting only the most
 ## Quick Start
 
 1. Load extension in Chrome (`chrome://extensions/` → Developer mode → Load unpacked)
-2. Upload your complete master LaTeX resume in the "Base Resume" section. This should be *Jake's Resume Format*.
+2. Upload your complete base LaTeX resume in the "Base Resume" section. This should be *Jake's Resume Format*.
 3. Choose AI: Local AI (default) or Gemini API (requires [API key](https://aistudio.google.com/app/apikey))
 4. Navigate to a LinkedIn or Workday job posting
 5. Click "Tune Current Job" - AI will automatically select and generate your tailored one-page resume
