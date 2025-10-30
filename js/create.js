@@ -4,7 +4,6 @@ const ALLOWED_URL_PATTERNS = [
     /^https?:\/\/(www\.)?linkedin\.com\/jobs\/collections\/\w+/i,    // LinkedIn job collections
     /^https?:\/\/(www\.)?linkedin\.com\/jobs\/search/i,               // LinkedIn job search results
     /^https?:\/\/.*\.myworkdayjobs\.com\/.*\/job\//i,                 // Workday job postings (subdomain pattern)
-    /^https?:\/\/[^\/]+\/[^\/]*job[^\/]*/i                            // Generic Workday-style job URLs with /job path
 ];
 
 /**
