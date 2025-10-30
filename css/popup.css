@@ -909,23 +909,35 @@ button, .action-btn, .resume-item {
 }
 
 .change-key-btn {
-    background-color: #ffffff;
+    background-color: transparent;
     color: #3b63d6;
     font-size: 0.86rem;
     padding: 0.28rem 0.6rem;
     font-weight: 600;
-    border: 1px solid rgba(76,99,210,0.18);
-    box-shadow: none;
+    border: none;
+    box-shadow: 0 2px 6px rgba(59, 99, 214, 0.15);
     border-radius: 8px;
     min-width: 56px; /* narrower so title has more room */
     padding: 0.22rem 0.5rem;
     text-align: center;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.change-key-btn img {
+    transform: rotate(-45deg);
+    filter: brightness(0) saturate(100%) invert(38%) sepia(88%) saturate(1782%) hue-rotate(215deg) brightness(95%) contrast(91%);
+    transition: filter 0.2s ease;
 }
 
 .change-key-btn:hover {
-    background-color: #f6f8ff;
-    border-color: rgba(76,99,210,0.28);
+    background-color: transparent;
     color: #314fb8;
+    box-shadow: 0 4px 12px rgba(59, 99, 214, 0.25);
+    transform: translateY(-1px);
+}
+
+.change-key-btn:hover img {
+    filter: brightness(0) saturate(100%) invert(28%) sepia(78%) saturate(1672%) hue-rotate(215deg) brightness(85%) contrast(91%);
 }
 
 /* When we want to hide the button without collapsing its space, use visibility */
