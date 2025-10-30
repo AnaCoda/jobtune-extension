@@ -235,7 +235,7 @@ function generateBestResume(scoredItems, pageLimit = 1) {
     // Start with all always-include items
     const selectedItems = [...alwaysInclude];
     
-    const maxContentLength = pageLimit * 8000;
+    const maxContentLength = pageLimit * 6500;
     let currentLength = selectedItems.reduce((sum, si) => sum + si.item.content.length, 0);
     
     // Ensure at least one experience if available
