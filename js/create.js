@@ -31,7 +31,6 @@ const LANGUAGE_MODEL_OPTIONS = {
 };
 
 async function createLanguageModel() {
-    console.log('Creating language model...');
     const availability = await LanguageModel.availability();
 
     if (availability === 'unavailable') {
@@ -54,10 +53,8 @@ let globalLatexEngine = null;
 
 async function getOrCreateLatexEngine() {
     if (!globalLatexEngine) {
-        console.log('Creating new PdfTeXEngine instance...');
         globalLatexEngine = new PdfTeXEngine();
         await globalLatexEngine.loadEngine();
-        console.log('PdfTeXEngine loaded and ready');
     }
     return globalLatexEngine;
 }
@@ -123,8 +120,6 @@ async function exportResume(resume, url) {
     // r contains PDF binary and compilation log.
     let r = await latexEngine.compileLaTeX();
     
-    console.log('Compilation status:', r.status);
-    console.log('Compilation log:', r.log);
     
     if (r.status !== 0 || !r.pdf) {
         console.error('PDF compilation failed!');
@@ -151,7 +146,6 @@ async function exportResume(resume, url) {
     document.body.removeChild(a);
     URL.revokeObjectURL(pdfUrl);
     
-    console.log('PDF downloaded successfully!');
     return { success: true, filename };
 }
 
@@ -200,7 +194,6 @@ async function main(htmlContent, url) {
         return;
     }
     
-    console.log('Creating Resume....');
 
     try {
         // scripts.js
@@ -208,7 +201,6 @@ async function main(htmlContent, url) {
         const resumeResult = await createResume(languageModel, htmlContent, masterResume);
         setProgress(85, 'Saving resume…');
         await updateResume(resumeResult.resume, url, resumeResult.jobTitle);
-        console.log('Resume updated');
         
         setProgress(100, 'Resume created successfully!');
         setBusyState(false);

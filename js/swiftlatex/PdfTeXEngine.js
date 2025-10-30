@@ -89,21 +89,17 @@ var PdfTeXEngine = /** @class */ (function () {
                         }
                         this.latexWorkerStatus = EngineStatus.Init;
                         return [4 /*yield*/, new Promise(function (resolve, reject) {
-                                console.log('Creating Worker with path:', ENGINE_PATH);
                                 try {
                                     _this.latexWorker = new Worker(ENGINE_PATH);
-                                    console.log('Worker created successfully');
                                 } catch (error) {
                                     console.error('Failed to create Worker:', error);
                                     reject(error);
                                     return;
                                 }
                                 _this.latexWorker.onmessage = function (ev) {
-                                    console.log('Worker message received:', ev.data);
                                     var data = ev['data'];
                                     var cmd = data['result'];
                                     if (cmd === 'ok') {
-                                        console.log('Worker ready!');
                                         _this.latexWorkerStatus = EngineStatus.Ready;
                                         resolve();
                                     }
@@ -165,7 +161,6 @@ var PdfTeXEngine = /** @class */ (function () {
                                     var log = data['log'];
                                     var status = data['status'];
                                     _this.latexWorkerStatus = EngineStatus.Ready;
-                                    console.log('Engine compilation finish ' + (performance.now() - start_compile_time));
                                     var nice_report = new CompileResult();
                                     nice_report.status = status;
                                     nice_report.log = log;
@@ -176,7 +171,6 @@ var PdfTeXEngine = /** @class */ (function () {
                                     resolve(nice_report);
                                 };
                                 _this.latexWorker.postMessage({ 'cmd': 'compilelatex' });
-                                console.log('Engine compilation start');
                             })];
                     case 1:
                         res = _a.sent();
@@ -211,7 +205,6 @@ var PdfTeXEngine = /** @class */ (function () {
                                         var formatBlob = new Blob([formatArray], { type: 'application/octet-stream' });
                                         var formatURL_1 = URL.createObjectURL(formatBlob);
                                         setTimeout(function () { URL.revokeObjectURL(formatURL_1); }, 30000);
-                                        console.log('Download format file via ' + formatURL_1);
                                         resolve();
                                     }
                                     else {

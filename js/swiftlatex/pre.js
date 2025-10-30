@@ -11,7 +11,6 @@ Module['print'] = function(a) {
 
 Module['printErr'] = function(a) {
     self.memlog += (a + "\n");
-    console.log(a);
 };
 
 Module['preRun'] = function() {
@@ -282,11 +281,9 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
     xhr.open("GET", remote_url, false);
     xhr.timeout = 150000;
     xhr.responseType = "arraybuffer";
-    console.log("Start downloading texlive file " + remote_url);
     try {
         xhr.send();
     } catch (err) {
-        console.log("TexLive Download Failed " + remote_url);
         return 0;
     }
 
@@ -299,7 +296,6 @@ function kpse_find_file_impl(nameptr, format, _mustexist) {
         return allocate(intArrayFromString(savepath), 'i8', ALLOC_NORMAL);
 
     } else if (xhr.status === 301) {
-        console.log("TexLive File not exists " + remote_url);
         texlive404_cache[cacheKey] = 1;
         return 0;
     } 
@@ -333,11 +329,9 @@ function kpse_find_pk_impl(nameptr, dpi) {
     xhr.open("GET", remote_url, false);
     xhr.timeout = 150000;
     xhr.responseType = "arraybuffer";
-    console.log("Start downloading texlive file " + remote_url);
     try {
         xhr.send();
     } catch (err) {
-        console.log("TexLive Download Failed " + remote_url);
         return 0;
     }
 
@@ -350,7 +344,6 @@ function kpse_find_pk_impl(nameptr, dpi) {
         return allocate(intArrayFromString(savepath), 'i8', ALLOC_NORMAL);
 
     } else if (xhr.status === 301) {
-        console.log("TexLive File not exists " + remote_url);
         pk404_cache[cacheKey] = 1;
         return 0;
     } 

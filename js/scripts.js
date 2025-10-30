@@ -160,7 +160,6 @@ async function rateResumeItems(resumeItems, jobDescription, languageModel) {
     
     // Get AI config once for all items
     const aiConfig = await getAIConfig();
-    console.log('Using AI config:', aiConfig);
     
     for (const item of resumeItems) {
         // Always include items get max score
@@ -284,9 +283,7 @@ async function runPrompt(prompt, languageModel, aiConfig = null) {
     if (!aiConfig) {
         aiConfig = await getAIConfig();
     }
-    
-    console.log(`Running prompt using ${aiConfig.useLocalAI ? 'Local AI' : 'Gemini API'}...`);
-    
+        
     // Use Gemini API if local AI is disabled
     if (!aiConfig.useLocalAI) {
         return await runGeminiPrompt(prompt, aiConfig.geminiApiKey);
@@ -301,7 +298,6 @@ async function runPrompt(prompt, languageModel, aiConfig = null) {
     } catch (e) {
         console.error('Local AI prompt failed');
         console.error(e);
-        console.log('Prompt:', prompt);
         throw new Error(`Local AI failed: ${e.message}`);
     }
 }
@@ -328,7 +324,6 @@ async function runGeminiPrompt(prompt, apiKey) {
     };
     
     try {
-        console.log('Calling Gemini API...');
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -352,7 +347,6 @@ async function runGeminiPrompt(prompt, apiKey) {
         }
         
         const data = await response.json();
-        console.log('Gemini API response received');
         
         // Extract the text from Gemini's response structure
         if (data.candidates && data.candidates.length > 0 && 
@@ -428,13 +422,9 @@ async function createResume(languageModel, document, masterResume) {
     
     updateProgress(35, 'Parsing job posting…');
     const cleanContent = parseHTML(document);
-    console.log(cleanContent);
-    console.log('Cleaned content length:', cleanContent.textContent.length);
-    console.log('Job title:', cleanContent.jobTitle);
-    
+
     updateProgress(45, 'Splitting resume sections…');
     splits = splitResume(masterResume);
-    console.log(`Split resume into ${splits.length} items.`);
     
     updateProgress(50, 'Ranking resume sections…');
     ratedSplits = await rateResumeItems(splits, cleanContent, languageModel);

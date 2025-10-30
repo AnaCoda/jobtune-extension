@@ -26,7 +26,6 @@ class ResumesExplorer {
             if (areaName === 'local') {
                 // Check if resumes, lastUpdateTimes, or jobTitles have changed
                 if (changes.resumes || changes.lastUpdateTimes || changes.jobTitles) {
-                    console.log('Storage changed, refreshing resumes...');
                     this.loadResumes().then(() => {
                         this.renderResumes();
                     });
@@ -34,7 +33,6 @@ class ResumesExplorer {
                 
                 // Check if master resume has changed
                 if (changes.masterResume || changes.masterResumeLastUpdate) {
-                    console.log('Master resume changed, refreshing...');
                     this.loadMasterResume().then(() => {
                         this.renderMasterResumeDetails();
                     });
@@ -391,21 +389,15 @@ class ResumesExplorer {
             // Create or get the LaTeX engine
             let latexEngine = window.globalLatexEngine;
             if (!latexEngine) {
-                console.log('Creating new PdfTeXEngine instance...');
                 latexEngine = new PdfTeXEngine();
                 await latexEngine.loadEngine();
-                console.log('PdfTeXEngine loaded and ready');
                 window.globalLatexEngine = latexEngine;
             }
 
             latexEngine.writeMemFSFile("main.tex", resume);
             latexEngine.setEngineMainFile("main.tex");
             
-            console.log('Compiling LaTeX to PDF...');
             const result = await latexEngine.compileLaTeX();
-            
-            console.log('Compilation status:', result.status);
-            console.log('Compilation log:', result.log);
             
             if (result.status !== 0 || !result.pdf) {
                 console.error('PDF compilation failed!');
@@ -434,7 +426,6 @@ class ResumesExplorer {
             document.body.removeChild(a);
             URL.revokeObjectURL(pdfUrl);
             
-            console.log('PDF downloaded successfully!');
             buttonElement.textContent = 'Downloaded!';
             setTimeout(() => {
                 buttonElement.textContent = originalText;
@@ -453,7 +444,6 @@ class ResumesExplorer {
         if (!resume) return;
 
         navigator.clipboard.writeText(resume).then(() => {
-            console.log('Resume copied to clipboard');
         }).catch(err => {
             console.error('Failed to copy resume:', err);
             alert('Failed to copy to clipboard.');
@@ -618,7 +608,6 @@ class AISettingsManager {
         try {
             const useLocalAI = this.useLocalAICheckbox.checked;
             await chrome.storage.local.set({ useLocalAI });
-            console.log('AI settings saved:', { useLocalAI });
         } catch (error) {
             console.error('Error saving AI settings:', error);
         }
@@ -635,7 +624,6 @@ class AISettingsManager {
             await chrome.storage.local.set({ geminiApiKey: apiKey });
             this.hasApiKey = true;
             alert('API key saved successfully!');
-            console.log('Gemini API key saved');
             
             // Update UI to show status instead of input
             this.updateUIState();
