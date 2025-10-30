@@ -158,29 +158,67 @@ async function exportResume(resume, url) {
 async function main(htmlContent, url) {
     showProgress(true);
     setBusyState(true);
-    setProgress(5, 'Initializing language model…');
-    const languageModel = await createLanguageModel();
-    if (!languageModel) {
-        console.error('Language Model unavailable');
-        setProgress(0, 'Language Model unavailable');
+    
+    // Check AI configuration
+    const aiConfig = await chrome.storage.local.get(['useLocalAI', 'geminiApiKey']);
+    const useLocalAI = aiConfig.useLocalAI !== undefined ? aiConfig.useLocalAI : true;
+    
+    let languageModel = null;
+    
+    if (useLocalAI) {
+        setProgress(5, 'Initializing local AI model…');
+        languageModel = await createLanguageModel();
+        if (!languageModel) {
+            console.error('Language Model unavailable');
+            alert('Local AI model is unavailable. Please switch to Gemini API or try again later.');
+            setProgress(0, 'Language Model unavailable');
+            setBusyState(false);
+            showProgress(false);
+            return;
+        }
+    } else {
+        // Using Gemini API - verify API key exists
+        if (!aiConfig.geminiApiKey) {
+            console.error('Gemini API key not configured');
+            alert('Please configure your Gemini API key before generating a resume.');
+            setBusyState(false);
+            showProgress(false);
+            return;
+        }
+        setProgress(5, 'Using Gemini API…');
+        // languageModel will be null, but that's okay - runPrompt will use Gemini API
+    }
+    
+    setProgress(20, 'Loading master resume…');
+    const masterResume = await getMasterResume();
+    
+    if (!masterResume) {
+        console.error('Master resume not found');
+        alert('Please upload a base resume before generating a tuned resume.');
         setBusyState(false);
         showProgress(false);
         return;
     }
-    setProgress(20, 'Loading master resume…');
-    const masterResume = await getMasterResume();
+    
     console.log('Creating Resume....');
 
-    // scripts.js
-    setProgress(35, 'Parsing job posting…');
-    const resumeResult = await createResume(languageModel, htmlContent, masterResume);
-    setProgress(85, 'Saving resume…');
-    await updateResume(resumeResult.resume, url, resumeResult.jobTitle);
-    console.log('Resume updated');
-    
-    setProgress(100, 'Resume created successfully!');
-    setBusyState(false);
-    setTimeout(() => showProgress(false), 800);
+    try {
+        // scripts.js
+        setProgress(35, 'Parsing job posting…');
+        const resumeResult = await createResume(languageModel, htmlContent, masterResume);
+        setProgress(85, 'Saving resume…');
+        await updateResume(resumeResult.resume, url, resumeResult.jobTitle);
+        console.log('Resume updated');
+        
+        setProgress(100, 'Resume created successfully!');
+        setBusyState(false);
+        setTimeout(() => showProgress(false), 800);
+    } catch (error) {
+        console.error('Error creating resume:', error);
+        alert(`Failed to create resume: ${error.message}`);
+        setBusyState(false);
+        showProgress(false);
+    }
 }
 
 // add button listeners

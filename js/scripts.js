@@ -285,16 +285,91 @@ async function runPrompt(prompt, languageModel, aiConfig = null) {
         aiConfig = await getAIConfig();
     }
     
-    // For now, we'll use the local AI model regardless of settings
-    // In the next step, this will be updated to use Gemini API when useLocalAI is false
+    console.log(`Running prompt using ${aiConfig.useLocalAI ? 'Local AI' : 'Gemini API'}...`);
+    
+    // Use Gemini API if local AI is disabled
+    if (!aiConfig.useLocalAI) {
+        return await runGeminiPrompt(prompt, aiConfig.geminiApiKey);
+    }
+    
+    // Use local AI model
     try {
+        if (!languageModel) {
+            throw new Error('Local AI model is not available');
+        }
         return languageModel.prompt(prompt);
     } catch (e) {
-        console.log('Prompt failed');
+        console.error('Local AI prompt failed');
         console.error(e);
         console.log('Prompt:', prompt);
-        console.log('AI Config:', aiConfig);
-        throw e;
+        throw new Error(`Local AI failed: ${e.message}`);
+    }
+}
+
+/// This function calls the Gemini API with a prompt
+/// Returns: The response text from Gemini
+async function runGeminiPrompt(prompt, apiKey) {
+    if (!apiKey) {
+        throw new Error('Gemini API key is required but not provided. Please configure your API key in the settings.');
+    }
+    
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+    
+    const requestBody = {
+        contents: [
+            {
+                parts: [
+                    {
+                        text: prompt
+                    }
+                ]
+            }
+        ]
+    };
+    
+    try {
+        console.log('Calling Gemini API...');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'x-goog-api-key': apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Gemini API error response:', errorText);
+            
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Invalid API key. Please check your Gemini API key configuration.');
+            } else if (response.status === 429) {
+                throw new Error('API rate limit exceeded. Please try again later.');
+            } else {
+                throw new Error(`Gemini API error (${response.status}): ${response.statusText}`);
+            }
+        }
+        
+        const data = await response.json();
+        console.log('Gemini API response received');
+        
+        // Extract the text from Gemini's response structure
+        if (data.candidates && data.candidates.length > 0 && 
+            data.candidates[0].content && data.candidates[0].content.parts &&
+            data.candidates[0].content.parts.length > 0) {
+            return data.candidates[0].content.parts[0].text;
+        } else {
+            console.error('Unexpected Gemini response structure:', data);
+            throw new Error('Invalid response structure from Gemini API');
+        }
+    } catch (e) {
+        if (e.message.includes('Gemini API') || e.message.includes('API key') || e.message.includes('rate limit')) {
+            throw e; // Re-throw our custom errors
+        }
+        console.error('Gemini API request failed');
+        console.error(e);
+        throw new Error(`Failed to connect to Gemini API: ${e.message}`);
     }
 }
 
