@@ -1,8 +1,10 @@
-# JobTune - AI-Powered Resume Tailoring Chrome Extension
+<img src="assets/icon.png" alt="JobTune Logo" width="32" height="32" style="float:left; margin-right:8px;">
 
-<p align="center">
-  <img src="assets/icon.png" alt="JobTune Logo" width="128" height="128">
-</p>
+## JobTune
+
+### AI-Powered Resume Tailoring Chrome Extension
+
+<br clear="left"/>
 
 JobTune is a Chrome extension that automatically tailors your resume to match specific job postings using AI. It analyzes job descriptions and intelligently selects the most relevant sections from your master resume to create customized, job-specific resumes.
 
