@@ -1,6 +1,6 @@
 {
-  "name": "Hello Extensions",
-  "description": "Base Level Extension",
+  "name": "JobTune",
+  "description": "Generate tailored one-page resumes from a comprehensive LaTeX base resume using Local AI or Gemini API.",
   "version": "1.0",
   "manifest_version": 3,
   "permissions": ["storage", "scripting","activeTab"],
@@ -9,8 +9,8 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "View Page Summaries",
+  "default_popup": "popup.html",
+  "default_title": "JobTune",
     "default_icon": "assets/icon.png"
   },
   "web_accessible_resources": [
