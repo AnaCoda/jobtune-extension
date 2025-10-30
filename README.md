@@ -62,7 +62,3 @@ JobTune intelligently shortens your multi-page resume by selecting only the most
 
 - Currently supports LinkedIn and Workday job postings
 - For other sites, the extension will show: "Please navigate to a supported job posting page"
-
-## Support
-
-For issues or questions, please [open an issue](https://github.com/AnaCoda/resume-chrome-extension/issues) on GitHub.
