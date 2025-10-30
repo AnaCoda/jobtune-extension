@@ -87,11 +87,6 @@ class ResumesExplorer {
             this.saveMasterResume();
         });
 
-        // Auto-save when file is selected (to prevent popup closing issue)
-        document.getElementById('masterResumeInput').addEventListener('change', () => {
-            this.saveMasterResume();
-        });
-
         // Collapsible master resume section
         document.getElementById('master-resume-header').addEventListener('click', () => {
             this.toggleMasterResumeSection();
