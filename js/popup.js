@@ -577,21 +577,26 @@ class AISettingsManager {
 
     updateUIState() {
         const useLocalAI = this.useLocalAICheckbox.checked;
-        
+        // Update toggle label text
+        const toggleTextEl = document.querySelector('.toggle-text');
+        if (toggleTextEl) toggleTextEl.textContent = useLocalAI ? 'Local AI' : 'Gemini API';
+
         if (useLocalAI) {
             // Using Local AI: hide everything related to Gemini
             this.geminiApiSection.hidden = true;
-            this.changeKeyBtn.hidden = true;
+            this.apiKeyInputContainer.hidden = true;
+            // hide change key button but keep its layout space
+            this.changeKeyBtn.classList.add('hidden');
         } else {
             // Using Gemini API
             if (this.hasApiKey) {
                 // API key exists: show "Change Key" button, hide input
-                this.changeKeyBtn.hidden = false;
+                this.changeKeyBtn.classList.remove('hidden');
                 this.geminiApiSection.hidden = true;
                 this.apiKeyInputContainer.hidden = true;
             } else {
-                // No API key: hide button, show input
-                this.changeKeyBtn.hidden = true;
+                // No API key: hide button (reserve space), show input
+                this.changeKeyBtn.classList.add('hidden');
                 this.geminiApiSection.hidden = false;
                 this.apiKeyInputContainer.hidden = false;
             }
@@ -599,7 +604,8 @@ class AISettingsManager {
     }
 
     showApiKeyInput() {
-        this.changeKeyBtn.hidden = true;
+        // hide the button but preserve its space and show the API key input
+        this.changeKeyBtn.classList.add('hidden');
         this.geminiApiSection.hidden = false;
         this.apiKeyInputContainer.hidden = false;
     }

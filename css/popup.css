@@ -744,17 +744,27 @@ button, .action-btn, .resume-item {
 .change-key-btn {
     background-color: transparent;
     color: #5e72e4;
-    font-size: 0.75rem;
-    padding: 0.3rem 0.6rem;
-    font-weight: 500;
+    font-size: 0.8rem;
+    padding: 0.32rem 0.7rem;
+    font-weight: 600;
     border: 1px solid #5e72e4;
     box-shadow: none;
+    border-radius: 6px;
+    min-width: 92px; /* reserve space so toggle won't jump */
+    text-align: center;
 }
 
 .change-key-btn:hover {
     background-color: #f0f4ff;
     border-color: #4c63d2;
     color: #4c63d2;
+}
+
+/* When we want to hide the button without collapsing its space, use visibility */
+.change-key-btn.hidden {
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0.0;
 }
 
 #api-key-input-container {
